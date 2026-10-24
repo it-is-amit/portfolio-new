@@ -1,4 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="16" fill="#F1F5F9" />
-  <path d="M18 48V17h6l8 12 8-12h6v31h-7V29l-7 10-7-10v19h-7Z" fill="#862FE7" />
+  <rect width="64" height="64" rx="17" fill="#111827" />
+  <text
+    x="32"
+    y="43"
+    fill="#F3D68A"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="29"
+    font-weight="700"
+    letter-spacing="-2"
+    text-anchor="middle"
+  >AV</text>
 </svg>

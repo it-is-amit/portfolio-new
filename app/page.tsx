@@ -7,12 +7,13 @@ const personSchema = {
   name: profile.name,
   jobTitle: profile.title,
   email: `mailto:${profile.email}`,
+  telephone: profile.phone,
   address: {
     "@type": "PostalAddress",
     addressLocality: profile.location.split(",")[0]?.trim(),
     addressCountry: "IN",
   },
-  sameAs: [profile.links.linkedin, profile.links.github],
+  sameAs: [profile.links.instagram, profile.links.linkedin, profile.links.github],
   knowsAbout: stackGroups.flatMap((group) => [...group.items]),
 };
 

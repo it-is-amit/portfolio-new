@@ -1,8 +1,9 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
-import { Award, GraduationCap } from "lucide-react";
+import { Award, GraduationCap, Star } from "lucide-react";
 import { awards, copy, education, journey } from "@/data/profile";
+import { AwardBadge } from "@/components/ui/award-badge";
 import { usePrefersReducedMotion } from "@/components/ui/shader-canvas-utils/motion";
 import { gsap, registerGsapPlugins, revealSectionHeading } from "@/lib/gsap-client";
 
@@ -133,11 +134,13 @@ export function JourneySection() {
             ))}
           </div>
 
-          <aside className="journey-academics grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-2" aria-label="Education and recognition">
+          <aside className="journey-credentials" aria-label="Education and recognition">
             <section className="journey-education-card" aria-labelledby="education-title">
               <div className="journey-education-card__topline">
                 <span>{copy.journeyEducation}</span>
-                <GraduationCap size={17} strokeWidth={1.8} aria-hidden="true" />
+                <span className="journey-education-card__icon">
+                  <GraduationCap size={19} strokeWidth={1.8} aria-hidden="true" />
+                </span>
               </div>
               <p className="journey-education-card__degree-label" aria-hidden="true">B.Tech</p>
               <h3 id="education-title">
@@ -150,22 +153,30 @@ export function JourneySection() {
               </span>
             </section>
 
-            <section className="journey-recognition" aria-labelledby="recognition-title">
-              <div className="journey-recognition__topline">
-                <p className="eyebrow">{copy.recognition}</p>
-                <Award size={16} strokeWidth={1.8} aria-hidden="true" />
-              </div>
-              <h3 className="sr-only" id="recognition-title">{copy.recognition}</h3>
-              <ul>
-                {awards.map((award) => (
-                  <li key={award.title}>
-                    <Award size={14} aria-hidden="true" />
-                    <span>{award.title}</span>
-                    {"organization" in award && <small>{award.organization}</small>}
-                  </li>
-                ))}
-              </ul>
-            </section>
+            <div className="journey-awards-grid" role="list" aria-label={copy.recognition}>
+              {awards.map((award, index) => {
+                const AwardIcon = index === 0 ? Award : Star;
+                return (
+                  <AwardBadge
+                    className="journey-award-card"
+                    tone={index === 0 ? "gold" : "violet"}
+                    key={award.title}
+                    role="listitem"
+                    aria-labelledby={`journey-award-${index}`}
+                  >
+                    <span className="journey-award-card__icon">
+                      <AwardIcon size={20} strokeWidth={1.7} aria-hidden="true" />
+                    </span>
+                    <div className="journey-award-card__copy">
+                      <p className="journey-award-card__eyebrow">{copy.recognition}</p>
+                      <h3 id={`journey-award-${index}`}>{award.title}</h3>
+                      <p className="journey-award-card__organization">{award.organization}</p>
+                    </div>
+                    <span className="journey-award-card__index" aria-hidden="true">0{index + 1}</span>
+                  </AwardBadge>
+                );
+              })}
+            </div>
           </aside>
         </div>
       </div>

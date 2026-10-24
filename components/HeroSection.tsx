@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useRef } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
-import { ArrowDownRight, Download } from "lucide-react";
+import { ArrowDownRight, Download, Star } from "lucide-react";
 import { GlassButton } from "@/components/ui/glass-button";
 import { copy, profile } from "@/data/profile";
 import { usePrefersReducedMotion } from "@/components/ui/shader-canvas-utils/motion";
@@ -109,27 +109,24 @@ export function HeroSection({ introReady }: HeroSectionProps) {
       <div className="grid h-full min-h-0 place-items-center pt-[76px] pb-[76px] sm:pt-[88px] sm:pb-[88px]">
         <div className="w-full max-w-[1020px] text-center">
           <div
-            className="hero-experience-chip mx-auto inline-flex min-h-9 items-center justify-center gap-2 rounded-full border border-white/75 bg-[rgba(255,255,255,0.42)] px-4 py-2 text-[12px] font-semibold normal-case tracking-[0.02em] text-[var(--ultra-violet)] shadow-[0_10px_28px_rgba(17,24,39,0.1),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl backdrop-saturate-150"
+            className="hero-experience-chip mx-auto inline-flex min-h-10 items-center justify-center gap-2 rounded-full px-4 py-2 text-[12px] font-semibold tracking-[0.02em] text-[var(--midnight-ink)]"
             data-hero-enter
             onPointerMove={handleExperienceChipPointerMove}
           >
-            <span className="size-1.5 rounded-full bg-[var(--voltage-violet)]" aria-hidden="true" />
-            <span>{profile.experienceYears}+ years of experience</span>
+            <Star className="size-3.5 shrink-0 text-[#74490d]" fill="currentColor" strokeWidth={1.8} aria-hidden="true" />
+            <span>{profile.experienceYears} years of experience</span>
           </div>
           <h1
-            className="mx-auto mt-4 block max-w-[1020px] text-center text-[clamp(2.5rem,6vw,6.25rem)] font-semibold leading-[0.9] tracking-[-0.085em] text-[var(--midnight-ink)] normal-case sm:mt-6"
+            className="mx-auto mt-4 max-w-[1100px] text-center text-[clamp(2.5rem,6vw,6.25rem)] font-semibold leading-[0.9] tracking-[-0.085em] text-[var(--midnight-ink)] normal-case sm:mt-6"
             id="hero-title"
             ref={titleRef}
             aria-label={profile.hero.headline.join(" ")}
           >
-            <span className="block">{profile.hero.headline[0]}</span>
-            <span className="block text-[var(--ultra-violet)]">{profile.hero.headline[1]}</span>
+            {profile.hero.headline[0]}{" "}
+            <span className="text-[var(--ultra-violet)]">{profile.hero.headline[1]}</span>
           </h1>
-          <p className="mx-auto mt-3 max-w-[640px] text-sm font-medium leading-snug text-[var(--graphite)] sm:mt-5 sm:text-lg" data-hero-enter>
+          <p className="mx-auto mt-4 max-w-[720px] text-sm font-medium leading-relaxed text-[var(--graphite)] sm:mt-5 sm:text-lg" data-hero-enter>
             {profile.hero.tagline}
-          </p>
-          <p className="mx-auto mt-1.5 max-w-[600px] text-[11px] leading-relaxed text-[var(--slate)] sm:mt-2 sm:text-xs" data-hero-enter>
-            {profile.hero.locationLine}
           </p>
           <div className="mx-auto mt-4 flex w-full max-w-[360px] flex-col justify-center gap-2 sm:mt-6 sm:w-auto sm:max-w-none sm:flex-row" data-hero-enter>
             <GlassButton

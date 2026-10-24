@@ -17,12 +17,32 @@ const socialLinks: Array<{
 export function ProfileNotch() {
   const notchRef = useRef<HTMLDivElement>(null);
   const [stuck, setStuck] = useState(false);
+  const [galleryActive, setGalleryActive] = useState(false);
 
   useLayoutEffect(() => {
     const notch = notchRef.current;
     const heroStage = document.querySelector<HTMLElement>("[data-hero-stage]");
     const heroCard = heroStage?.querySelector<HTMLElement>("[data-hero-card]");
     if (!notch || !heroStage || !heroCard) return;
+
+    const gallery = document.getElementById("gallery");
+    const galleryObserver = gallery && typeof IntersectionObserver !== "undefined"
+      ? new IntersectionObserver(([entry]) => {
+          setGalleryActive(Boolean(entry?.isIntersecting));
+        }, { rootMargin: "0px 0px -98% 0px", threshold: 0 })
+      : null;
+    const updateGalleryVisibility = () => {
+      if (!gallery) return;
+      const bounds = gallery.getBoundingClientRect();
+      const isVisible = bounds.bottom > 0 && bounds.top < window.innerHeight;
+      setGalleryActive((current) => current === isVisible ? current : isVisible);
+    };
+    if (gallery && galleryObserver) galleryObserver.observe(gallery);
+    else if (gallery) {
+      updateGalleryVisibility();
+      window.addEventListener("scroll", updateGalleryVisibility, { passive: true });
+      window.addEventListener("resize", updateGalleryVisibility, { passive: true });
+    }
 
     let naturalTop = 0;
     const measureNaturalTop = () => {
@@ -47,6 +67,11 @@ export function ProfileNotch() {
     return () => {
       window.removeEventListener("scroll", updateStickyState);
       window.removeEventListener("resize", onResize);
+      galleryObserver?.disconnect();
+      if (gallery && !galleryObserver) {
+        window.removeEventListener("scroll", updateGalleryVisibility);
+        window.removeEventListener("resize", updateGalleryVisibility);
+      }
     };
   }, []);
 
@@ -54,6 +79,9 @@ export function ProfileNotch() {
     <div
       className="profile-notch pointer-events-none inset-x-0 z-[160] flex justify-center"
       data-stuck={stuck ? "true" : undefined}
+      data-gallery-active={galleryActive ? "true" : undefined}
+      aria-hidden={galleryActive}
+      inert={galleryActive}
       ref={notchRef}
     >
       <div

@@ -1,13 +1,51 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { usePrefersReducedMotion } from "@/components/ui/shader-canvas-utils/motion";
 import { copy, profile, services } from "@/data/profile";
 import { gsap, registerGsapPlugins, revealSectionHeading } from "@/lib/gsap-client";
 
+type DemoView = "overview" | "activity";
+
+function DashboardOverview() {
+  return (
+    <div className="services-demo__overview">
+      <div className="services-demo__metrics" aria-hidden="true">
+        <div className="services-demo__metric"><span>Projects</span><i /><b /></div>
+        <div className="services-demo__metric"><span>Activity</span><i /><b /></div>
+        <div className="services-demo__metric"><span>Progress</span><i /><b /></div>
+      </div>
+      <div className="services-demo__chart">
+        <div className="services-demo__chart-head"><span>Weekly activity</span><i /></div>
+        <div className="services-demo__bars" aria-hidden="true">
+          <span /><span /><span /><span /><span /><span /><span /><span />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DashboardActivity() {
+  const items = ["User flow refined", "Responsive layout", "Interface review"];
+  const stages = ["Design", "Build", "Review"];
+
+  return (
+    <div className="services-demo__activity">
+      {items.map((item, index) => (
+        <div className="services-demo__activity-row" key={item}>
+          <span className={`services-demo__activity-dot services-demo__activity-dot--${index + 1}`} />
+          <span className="services-demo__activity-label">{item}</span>
+          <span className="services-demo__activity-state">{stages[index]}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function ServicesSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const reducedMotion = usePrefersReducedMotion();
+  const [demoView, setDemoView] = useState<DemoView>("overview");
 
   useLayoutEffect(() => {
     const section = sectionRef.current;
@@ -17,115 +55,6 @@ export function ServicesSection() {
     const context = gsap.context(() => {
       const heading = section.querySelector<HTMLElement>("#services-title");
       if (heading) revealSectionHeading(heading);
-
-      const list = section.querySelector<HTMLElement>("[data-services-list]");
-      const progressFill = list?.querySelector<HTMLElement>(".services-list__track-fill");
-      if (list && progressFill) {
-        gsap.fromTo(
-          progressFill,
-          { scaleY: 0 },
-          {
-            scaleY: 1,
-            transformOrigin: "top center",
-            ease: "none",
-            scrollTrigger: {
-              trigger: list,
-              start: "top 76%",
-              end: "bottom 48%",
-              scrub: 0.42,
-              invalidateOnRefresh: true,
-            },
-          },
-        );
-      }
-
-      const colors = getComputedStyle(section);
-      const accent = colors.getPropertyValue("--ultra-violet").trim() || "#5F259E";
-      const ink = colors.getPropertyValue("--midnight-ink").trim() || "#111827";
-      const lavender = colors.getPropertyValue("--lavender-field").trim() || "#EBDAFD";
-      const muted = colors.getPropertyValue("--slate").trim() || "#6B7589";
-      const line = "rgba(17, 24, 39, 0.2)";
-
-      const rows = Array.from(section.querySelectorAll<HTMLElement>("[data-service-row]"));
-      for (const row of rows) {
-        const title = row.querySelector<HTMLElement>("[data-service-title]");
-        const description = row.querySelector<HTMLElement>("[data-service-description]");
-        const number = row.querySelector<HTMLElement>("[data-service-number]");
-        const sequence = gsap.timeline({
-          scrollTrigger: {
-            trigger: row,
-            start: "top 82%",
-            end: "bottom 38%",
-            scrub: 0.45,
-            invalidateOnRefresh: true,
-          },
-        });
-
-        sequence
-          .fromTo(
-            row,
-            { y: 18, opacity: 0.58 },
-            { y: 0, opacity: 1, duration: 0.42, ease: "none" },
-            0,
-          )
-          .to(row, { y: -3, opacity: 0.84, duration: 0.58, ease: "none" }, 0.42);
-
-        if (title) {
-          sequence
-            .fromTo(
-              title,
-              { x: -10, scale: 0.975, color: muted },
-              { x: 0, scale: 1.018, color: accent, duration: 0.4, ease: "none" },
-              0,
-            )
-            .to(title, { scale: 1, color: ink, duration: 0.6, ease: "none" }, 0.4);
-        }
-
-        if (description) {
-          sequence
-            .fromTo(
-              description,
-              { y: 8, opacity: 0.54 },
-              { y: 0, opacity: 1, duration: 0.42, ease: "none" },
-              0.04,
-            )
-            .to(description, { y: -2, opacity: 0.84, duration: 0.58, ease: "none" }, 0.42);
-        }
-
-        if (number) {
-          sequence
-            .fromTo(
-              number,
-              {
-                scale: 0.82,
-                color: muted,
-                borderColor: line,
-                backgroundColor: "rgba(235, 218, 253, 0)",
-              },
-              {
-                scale: 1,
-                color: accent,
-                borderColor: accent,
-                backgroundColor: lavender,
-                duration: 0.4,
-                ease: "none",
-              },
-              0,
-            )
-            .to(
-              number,
-              {
-                scale: 0.92,
-                color: muted,
-                borderColor: line,
-                backgroundColor: "rgba(235, 218, 253, 0.12)",
-                duration: 0.6,
-                ease: "none",
-              },
-              0.4,
-            );
-        }
-      }
     }, section);
 
     return () => context.revert();
@@ -139,39 +68,71 @@ export function ServicesSection() {
       aria-labelledby="services-title"
     >
       <div className="mx-auto max-w-[1480px] px-[clamp(20px,5vw,84px)]">
-        <header className="max-w-[920px]">
-          <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--ultra-violet)]">
-            01 <span className="mx-2 text-[var(--orchid-wash)]">/</span>{copy.services}
-          </p>
-          <h2 className="mt-3 text-section-heading font-semibold leading-[0.88] tracking-[-0.09em] text-[var(--midnight-ink)]" id="services-title" data-section-heading>
-            {copy.servicesTitle}<span className="text-[var(--voltage-violet)]">.</span>
-          </h2>
-          <p className="mt-5 max-w-[720px] text-sm leading-relaxed text-[var(--graphite)] sm:text-base">
-            {profile.about.statement}
-          </p>
+        <header className="services-section-header">
+          <div>
+            <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--ultra-violet)]">
+              01 <span className="mx-2 text-[var(--orchid-wash)]" aria-hidden="true">/</span>{copy.services}
+            </p>
+            <h2 className="mt-3 text-section-heading font-semibold leading-[0.88] tracking-[-0.09em] text-[var(--midnight-ink)]" id="services-title" data-section-heading>
+              {copy.servicesTitle}<span className="text-[var(--voltage-violet)]">.</span>
+            </h2>
+          </div>
+          <p className="services-section-header__intro">{profile.about.statement}</p>
         </header>
 
-        <div className="services-list-wrap mt-8 sm:mt-10" data-services-list>
-          <span className="services-list__track" aria-hidden="true">
-            <span className="services-list__track-fill" />
-          </span>
-          <ol className="services-list m-0 list-none" aria-label={copy.services}>
-            {services.map((service) => (
-              <li className="services-list__row" key={service.id} data-service-row>
-                <article className="services-list__article">
-                  <span className="services-list__number" data-service-number aria-hidden="true">{service.number}</span>
-                  <div className="services-list__copy">
-                    <h3 className="services-list__title" data-service-title>
-                      {service.title}
-                    </h3>
-                    <p className="services-list__description" data-service-description>
-                      {service.description}
-                    </p>
-                  </div>
-                </article>
-              </li>
+        <div className="services-showcase">
+          <div className="services-roles">
+            {services.map((service, index) => (
+              <article
+                className={`services-role-card ${index === 0 ? "services-role-card--primary" : "services-role-card--secondary"}`}
+                key={service.id}
+              >
+                <span className="services-role-card__number">{service.number}</span>
+                <div className="services-role-card__content">
+                  <h3>{service.title}</h3>
+                  <ul aria-label={`${service.title} skills`}>
+                    {service.skills.map((skill) => <li key={skill}>{skill}</li>)}
+                  </ul>
+                </div>
+              </article>
             ))}
-          </ol>
+          </div>
+
+          <div className="services-demo" id="services-demo">
+            <div className="services-demo__toolbar">
+              <span className="services-demo__toolbar-label">INTERACTIVE PREVIEW</span>
+              <div className="services-demo__tabs" role="group" aria-label="Dashboard preview views">
+                <button type="button" aria-pressed={demoView === "overview"} aria-controls="services-demo-view" onClick={() => setDemoView("overview")}>
+                  Overview
+                </button>
+                <button type="button" aria-pressed={demoView === "activity"} aria-controls="services-demo-view" onClick={() => setDemoView("activity")}>
+                  Activity
+                </button>
+              </div>
+            </div>
+
+            <div className="services-demo__window">
+              <div className="services-demo__window-bar">
+                <div className="services-demo__window-dots" aria-hidden="true"><i /><i /><i /></div>
+                <span>Workspace</span>
+                <span className="services-demo__window-avatar" aria-hidden="true" />
+              </div>
+              <div className="services-demo__window-body">
+                <aside className="services-demo__sidebar" aria-hidden="true">
+                  <i className="is-active" /><i /><i /><i />
+                </aside>
+                <div className="services-demo__content" id="services-demo-view" aria-live="polite">
+                  <div className="services-demo__content-heading">
+                    <span>{demoView === "overview" ? "Overview" : "Recent activity"}</span>
+                    <i aria-hidden="true" />
+                  </div>
+                  <div className="services-demo__view" key={demoView}>
+                    {demoView === "overview" ? <DashboardOverview /> : <DashboardActivity />}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

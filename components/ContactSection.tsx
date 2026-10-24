@@ -44,22 +44,19 @@ export function ContactSection() {
   return (
     <section className="section-contact relative isolate overflow-hidden py-[clamp(80px,10vw,148px)]" id="contact" ref={sectionRef} aria-labelledby="contact-title">
       <span className="pointer-events-none absolute -right-[0.08em] top-[0.12em] select-none text-[clamp(16rem,36vw,42rem)] font-semibold leading-[0.72] tracking-[-0.12em] text-[rgba(95,37,158,0.045)]" aria-hidden="true">05</span>
-      <div className="relative mx-auto grid max-w-[1480px] grid-cols-1 gap-8 px-[clamp(20px,5vw,84px)] md:grid-cols-[minmax(110px,0.32fr)_minmax(0,1.68fr)] md:gap-10">
-        <div className="flex items-start gap-3 font-mono text-[9px] uppercase tracking-[0.11em] text-[var(--ultra-violet)] md:flex-col md:gap-2" data-contact-reveal>
-          <span>05</span><span className="text-[var(--orchid-wash)]" aria-hidden="true">/</span><span>{copy.contact}</span>
-        </div>
-
-        <div className="min-w-0">
-          <p className="font-mono text-[9px] uppercase tracking-[0.11em] text-[var(--graphite)]" data-contact-reveal>Open to senior roles</p>
-          <h2 className="mt-4 max-w-[1050px] text-section-heading font-semibold leading-[0.88] tracking-[-0.09em] text-[var(--midnight-ink)]" id="contact-title" data-section-heading>
-            Open to <span className="text-[var(--ultra-violet)]">senior frontend</span> roles.
+      <div className="relative mx-auto flex w-full max-w-[1480px] flex-col items-center gap-8 px-[clamp(20px,5vw,84px)] text-center">
+        <div className="flex w-full min-w-0 flex-col items-center">
+          <h2 className="mx-auto mt-0 max-w-[1050px] text-center text-section-heading font-semibold leading-[0.88] tracking-[-0.09em] text-[var(--midnight-ink)]" id="contact-title" data-section-heading>
+            <span className="block text-[0.8em]">Open to</span>
+            <span className="block text-[var(--ultra-violet)]">Senior Frontend</span>
+            <span className="block text-[0.8em]">roles</span>
           </h2>
-          <p className="mt-5 max-w-[610px] text-sm leading-relaxed text-[var(--graphite)] sm:text-base" data-contact-reveal>
+          <p className="mx-auto mt-5 max-w-[610px] text-center text-sm leading-relaxed text-[var(--graphite)] sm:text-base" data-contact-reveal>
             React / Next.js roles at product companies, in India and remote.
           </p>
 
           <a
-            className="group mt-7 flex w-fit max-w-full items-center gap-3 border-b border-[rgba(17,24,39,0.28)] pb-2 text-[clamp(1rem,3vw,2rem)] font-medium tracking-[-0.045em] text-[var(--midnight-ink)] transition-[border-color,color] duration-200 hover:border-[var(--ultra-violet)] hover:text-[var(--ultra-violet)] active:text-[var(--voltage-violet)] motion-reduce:transition-none sm:mt-9"
+            className="group mx-auto mt-7 flex w-fit max-w-full items-center justify-center gap-3 border-b border-[rgba(17,24,39,0.28)] pb-2 text-[clamp(1rem,3vw,2rem)] font-medium tracking-[-0.045em] text-[var(--midnight-ink)] transition-[border-color,color] duration-200 hover:border-[var(--ultra-violet)] hover:text-[var(--ultra-violet)] active:text-[var(--voltage-violet)] motion-reduce:transition-none sm:mt-9"
             href={`mailto:${profile.email}`}
             data-contact-reveal
           >
@@ -67,13 +64,7 @@ export function ContactSection() {
             <ArrowUpRight className="shrink-0 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transition-none" size={23} aria-hidden="true" />
           </a>
 
-          <div className="mt-7 flex flex-wrap gap-x-7 gap-y-3 font-mono text-[9px] uppercase tracking-[0.08em]" data-contact-reveal>
-            <a className="group inline-flex min-h-9 items-center gap-1.5 text-[var(--graphite)] transition-colors hover:text-[var(--ultra-violet)] active:text-[var(--voltage-violet)] motion-reduce:transition-none" href={profile.links.linkedin} target="_blank" rel="noreferrer">
-              LinkedIn<ArrowUpRight className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transition-none" size={13} aria-hidden="true" />
-            </a>
-            <a className="group inline-flex min-h-9 items-center gap-1.5 text-[var(--graphite)] transition-colors hover:text-[var(--ultra-violet)] active:text-[var(--voltage-violet)] motion-reduce:transition-none" href={profile.links.github} target="_blank" rel="noreferrer">
-              GitHub<ArrowUpRight className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transition-none" size={13} aria-hidden="true" />
-            </a>
+          <div className="mt-7 flex flex-wrap justify-center gap-x-7 gap-y-3 font-mono text-[9px] uppercase tracking-[0.08em]" data-contact-reveal>
             <GlassButton
               className="group"
               href={profile.links.resume}

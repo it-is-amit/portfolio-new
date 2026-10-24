@@ -2,7 +2,7 @@
 
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
-import { ArrowUpRight, Download } from "lucide-react";
+import { ArrowUpRight, Mail, Phone } from "lucide-react";
 import { MotionConfig, motion } from "framer-motion";
 import { ContactSection } from "@/components/ContactSection";
 import { ExperienceStory } from "@/components/ExperienceStory";
@@ -13,7 +13,6 @@ import { ProfileNotch } from "@/components/ProfileNotch";
 import { SectionDock } from "@/components/SectionDock";
 import { ServicesSection } from "@/components/ServicesSection";
 import { SocialIcon, type SocialPlatform } from "@/components/ui/social-icon";
-import { GlassButton } from "@/components/ui/glass-button";
 import { SmoothScrollProvider } from "@/components/SmoothScrollProvider";
 import { StackSection } from "@/components/StackSection";
 import { usePrefersReducedMotion } from "@/components/ui/shader-canvas-utils/motion";
@@ -110,46 +109,64 @@ export function HomeExperience() {
             <JourneySection />
             <UnfurlingGallery />
             <ContactSection />
-            <footer className="site-footer relative isolate overflow-hidden text-[var(--pure-white)]" id="site-footer">
+            <footer className="site-footer relative isolate flex flex-col overflow-hidden text-[var(--pure-white)]" id="site-footer" ref={footerRef}>
               <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[rgba(255,255,255,0.34)] to-transparent" aria-hidden="true" />
-              <div className="relative mx-auto max-w-[1480px] px-[clamp(20px,5vw,84px)] pb-[var(--layout-dock-clearance)] pt-[clamp(58px,8vw,104px)]">
-                <div className="grid gap-9 border-b border-[rgba(255,255,255,0.16)] pb-9 sm:pb-12 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:gap-12">
-                  <div className="max-w-[850px]">
-                    <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--lavender-mist)]">{profile.hero.roleLabel}</p>
-                    <h2 className="mt-4 text-section-heading font-semibold leading-[0.88] tracking-[-0.09em] text-[var(--pure-white)]" data-footer-heading>
-                      <span className="block">Thanks for</span>
-                      <span className="block text-[var(--lavender-mist)]">stopping by.</span>
+              <span className="site-footer__glow pointer-events-none absolute -right-28 top-8 size-[min(48vw,640px)] rounded-full" aria-hidden="true" />
+              <div className="site-footer__inner relative z-10 mx-auto flex w-full max-w-[1480px] flex-1 flex-col px-[clamp(20px,5vw,84px)] py-[clamp(28px,4.5vw,58px)] pb-[var(--layout-dock-clearance)]">
+                <div className="flex items-center justify-between gap-4">
+                  <p className="m-0 text-sm font-medium text-[rgba(241,245,249,0.72)]">Thank you for being here.</p>
+                  <a className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-[var(--pure-white)] transition-colors hover:text-[var(--lavender-mist)] motion-reduce:transition-none" href="#hero">
+                    {copy.backToTop}<ArrowUpRight size={15} aria-hidden="true" />
+                  </a>
+                </div>
+
+                <div className="grid flex-1 grid-cols-1 content-center gap-12 py-[clamp(48px,8vh,96px)] lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] lg:items-center lg:gap-16">
+                  <div className="max-w-[820px]">
+                    <h2 className="whitespace-nowrap text-[clamp(3.1rem,9.7vw,8.5rem)] font-semibold leading-[0.82] tracking-[-0.095em] text-[var(--pure-white)]" data-footer-heading>
+                      {profile.name}<span className="text-[var(--lavender-mist)]">.</span>
                     </h2>
-                    <p className="mt-5 max-w-[520px] text-xs leading-relaxed text-[rgba(241,245,249,0.74)] sm:text-sm">
-                      {profile.title} · {profile.location}
+                    <p className="mt-6 text-lg font-semibold tracking-[-0.035em] text-[var(--lavender-mist)] sm:text-2xl">
+                      {profile.hero.roleLabel}
+                    </p>
+                    <p className="mt-4 max-w-[590px] text-sm leading-relaxed text-[rgba(241,245,249,0.72)] sm:text-base">
+                      Thoughtful digital products, brought to life with React, Next.js, and care for every interaction.
                     </p>
                   </div>
 
-                  <div className="flex flex-col items-start gap-6 lg:items-end">
-                    <GlassButton
-                      className="group min-h-12 px-5"
-                      href={profile.links.resume}
-                      download="Amit-Verma-Resume.txt"
-                      tone="dark"
-                      variant="primary"
-                    >
-                      {copy.downloadResume}
-                      <Download className="transition-transform duration-200 group-hover:translate-y-0.5 motion-reduce:transition-none" size={16} aria-hidden="true" />
-                    </GlassButton>
-                    <nav className="flex items-center gap-3" aria-label="Social profiles">
-                      {footerSocials.map((social) => <FooterSocialLink {...social} reducedMotion={reducedMotion} key={social.id} />)}
-                    </nav>
+                  <div className="site-footer__contact max-w-[520px]">
+                    <p className="text-sm font-medium text-[rgba(241,245,249,0.68)]">Have a product or idea in mind?</p>
+                    <p className="mt-1 text-xl font-semibold tracking-[-0.04em] text-[var(--pure-white)] sm:text-2xl">Let’s start a conversation.</p>
+                    <div className="mt-6 grid gap-3">
+                      <a className="site-footer__action group" href={`mailto:${profile.email}`}>
+                        <span className="site-footer__action-icon"><Mail size={19} aria-hidden="true" /></span>
+                        <span className="site-footer__action-copy">
+                          <span>Email</span>
+                          <strong>{profile.email}</strong>
+                        </span>
+                        <ArrowUpRight className="site-footer__action-arrow" size={18} aria-hidden="true" />
+                      </a>
+                      <a className="site-footer__action group" href={profile.links.phone}>
+                        <span className="site-footer__action-icon"><Phone size={19} aria-hidden="true" /></span>
+                        <span className="site-footer__action-copy">
+                          <span>Call</span>
+                          <strong>{profile.phone}</strong>
+                        </span>
+                        <ArrowUpRight className="site-footer__action-arrow" size={18} aria-hidden="true" />
+                      </a>
+                    </div>
+                    <div className="mt-7 flex flex-wrap items-center justify-between gap-4">
+                      <p className="m-0 text-sm font-semibold text-[rgba(241,245,249,0.78)]">Connect with me</p>
+                      <nav className="flex items-center gap-3" aria-label="Social profiles">
+                        {footerSocials.map((social) => <FooterSocialLink {...social} reducedMotion={reducedMotion} key={social.id} />)}
+                      </nav>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 pt-5 font-mono text-[8px] uppercase tracking-[0.08em] text-[var(--mist)]">
-                  <a href="#hero" className="text-[var(--pure-white)] transition-colors hover:text-[var(--lavender-mist)] motion-reduce:transition-none">
-                    {profile.name}<span className="ml-2 text-[var(--slate)]">/ {profile.hero.portfolioLabel}</span>
-                  </a>
-                  <small className="font-mono text-[8px] uppercase tracking-[0.08em] text-[var(--mist)]">{profile.copyright}</small>
-                  <a className="inline-flex items-center gap-1.5 text-[var(--pure-white)] transition-colors hover:text-[var(--lavender-mist)] motion-reduce:transition-none" href="#hero">
-                    {copy.backToTop}<ArrowUpRight size={13} aria-hidden="true" />
-                  </a>
+                <div className="site-footer__bottom">
+                  <span>{profile.location}</span>
+                  {/* <span>{profile.techSummary}</span> */}
+                  <small>{profile.copyright}</small>
                 </div>
               </div>
             </footer>
