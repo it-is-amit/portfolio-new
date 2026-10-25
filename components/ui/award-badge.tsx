@@ -17,6 +17,10 @@ type AwardBadgeProps = Omit<
   children: ReactNode;
   className: string;
   tone: AwardTone;
+  /** Element to render. Defaults to `article` (Journey cards); small chips can use `div`. */
+  as?: "article" | "div";
+  /** Tilt multiplier: 1 for cards, lower for small elements where full tilt would look exaggerated. */
+  tilt?: number;
 };
 
 type PointerPosition = {
@@ -32,14 +36,20 @@ function resetCardStyle(card: HTMLElement) {
   card.style.removeProperty("--award-glare-opacity");
 }
 
-/** Adds pointer-driven tilt, prismatic foil, and a moving specular glare. */
+/**
+ * Metallic plate: pointer-driven tilt, prismatic foil, and a moving specular glare.
+ * Used by the Journey award cards and the Hero experience chip. Mouse only, so touch devices
+ * keep the static plate; disabled under reduced motion.
+ */
 export function AwardBadge({
   children,
   className,
   tone,
+  as: Element = "article",
+  tilt = 1,
   ...articleProps
 }: AwardBadgeProps) {
-  const cardRef = useRef<HTMLElement>(null);
+  const cardRef = useRef<HTMLElement | null>(null);
   const pendingPosition = useRef<PointerPosition | null>(null);
   const frameRef = useRef<number | null>(null);
   const reducedMotion = usePrefersReducedMotion();
@@ -80,8 +90,8 @@ export function AwardBadge({
 
       card.style.setProperty("--award-pointer-x", `${(position.x * 100).toFixed(1)}%`);
       card.style.setProperty("--award-pointer-y", `${(position.y * 100).toFixed(1)}%`);
-      card.style.setProperty("--award-tilt-x", `${((0.5 - position.y) * 8).toFixed(2)}deg`);
-      card.style.setProperty("--award-tilt-y", `${((position.x - 0.5) * 10).toFixed(2)}deg`);
+      card.style.setProperty("--award-tilt-x", `${((0.5 - position.y) * 8 * tilt).toFixed(2)}deg`);
+      card.style.setProperty("--award-tilt-y", `${((position.x - 0.5) * 10 * tilt).toFixed(2)}deg`);
       card.style.setProperty("--award-glare-opacity", "0.95");
       pendingPosition.current = null;
     });
@@ -100,9 +110,11 @@ export function AwardBadge({
   };
 
   return (
-    <article
+    <Element
       {...articleProps}
-      ref={cardRef}
+      ref={(node: HTMLElement | null) => {
+        cardRef.current = node;
+      }}
       className={className}
       data-award-tone={tone}
       onPointerEnter={updatePointer}
@@ -111,6 +123,6 @@ export function AwardBadge({
     >
       <span className="journey-award-card__foil" aria-hidden="true" />
       {children}
-    </article>
+    </Element>
   );
 }

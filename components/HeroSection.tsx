@@ -1,8 +1,8 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
-import type { PointerEvent as ReactPointerEvent } from "react";
 import { ArrowDownRight, Download, Star } from "lucide-react";
+import { AwardBadge } from "@/components/ui/award-badge";
 import { GlassButton } from "@/components/ui/glass-button";
 import { copy, profile } from "@/data/profile";
 import { usePrefersReducedMotion } from "@/components/ui/shader-canvas-utils/motion";
@@ -16,15 +16,6 @@ export function HeroSection({ introReady }: HeroSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const reducedMotion = usePrefersReducedMotion();
-
-  const handleExperienceChipPointerMove = (
-    event: ReactPointerEvent<HTMLDivElement>,
-  ) => {
-    if (reducedMotion || event.pointerType === "touch") return;
-    const bounds = event.currentTarget.getBoundingClientRect();
-    event.currentTarget.style.setProperty("--mx", `${event.clientX - bounds.left}px`);
-    event.currentTarget.style.setProperty("--my", `${event.clientY - bounds.top}px`);
-  };
 
   useLayoutEffect(() => {
     const section = sectionRef.current;
@@ -108,14 +99,17 @@ export function HeroSection({ introReady }: HeroSectionProps) {
     >
       <div className="grid h-full min-h-0 place-items-center pt-[76px] pb-[76px] sm:pt-[88px] sm:pb-[88px]">
         <div className="w-full max-w-[1020px] text-center">
-          <div
+          {/* Same metallic plate as the Journey award cards (gold tone), with tilt scaled for a chip. */}
+          <AwardBadge
+            as="div"
+            tone="gold"
+            tilt={0.55}
             className="hero-experience-chip mx-auto inline-flex min-h-10 items-center justify-center gap-2 rounded-full px-4 py-2 text-[12px] font-semibold tracking-[0.02em] text-[var(--midnight-ink)]"
             data-hero-enter
-            onPointerMove={handleExperienceChipPointerMove}
           >
             <Star className="size-3.5 shrink-0 text-[#74490d]" fill="currentColor" strokeWidth={1.8} aria-hidden="true" />
             <span>{profile.experienceYears} years of experience</span>
-          </div>
+          </AwardBadge>
           <h1
             className="mx-auto mt-4 max-w-[1100px] text-center text-[clamp(2.5rem,6vw,6.25rem)] font-semibold leading-[0.9] tracking-[-0.085em] text-[var(--midnight-ink)] normal-case sm:mt-6"
             id="hero-title"

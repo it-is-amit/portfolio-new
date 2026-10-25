@@ -59,6 +59,18 @@ export function ServicesSection() {
   const [staticStage, setStaticStage] = useState<CapabilityStage>(4);
   const stage = scrollMode ? scrollStage : staticStage;
 
+  // Heading reveal lives in its own effect so a journey-mode change (e.g. a resize across the
+  // 600px height threshold) never replays it.
+  useLayoutEffect(() => {
+    const heading = sectionRef.current?.querySelector<HTMLElement>("#services-title");
+    if (!heading || reducedMotion) return;
+    registerGsapPlugins();
+    const context = gsap.context(() => {
+      revealSectionHeading(heading);
+    });
+    return () => context.revert();
+  }, [reducedMotion]);
+
   useLayoutEffect(() => {
     const section = sectionRef.current;
     const journey = journeyRef.current;
@@ -67,8 +79,6 @@ export function ServicesSection() {
     registerGsapPlugins();
     let refreshFrame = 0;
     const context = gsap.context(() => {
-      const heading = section.querySelector<HTMLElement>("#services-title");
-      if (heading && !reducedMotion) revealSectionHeading(heading);
       if (!scrollMode) return;
 
       const preview = journey.querySelector<HTMLElement>("[data-cap-preview]");
@@ -252,6 +262,41 @@ export function ServicesSection() {
 
         <div className="cap" ref={journeyRef} data-mode={scrollMode ? "scroll" : "static"} data-stage={stage}>
           <div className="cap__sticky">
+            {/* Stage timeline: top-centre of the sticky stage, filled by the same scroll progress as the preview. */}
+            <div className="cap-timeline-wrap">
+              <div className="cap-timeline" role="group" aria-label="Design-to-code stages">
+                {capabilityStages.map((item, index) => {
+                  const value = (index + 1) as CapabilityStage;
+                  return (
+                    <button
+                      className="cap-timeline__step"
+                      type="button"
+                      style={{ "--i": index } as CSSProperties}
+                      aria-current={value === stage ? "step" : undefined}
+                      aria-label={`${scrollMode ? "Go to" : "Show"} stage ${item.number}: ${item.label}`}
+                      onClick={() => goToStage(value)}
+                      key={item.id}
+                    >
+                      <span className="cap-timeline__bar" aria-hidden="true"><span className="cap-timeline__fill" /></span>
+                      <span className="cap-timeline__meta">
+                        <span className="cap-timeline__number">{item.number}</span>
+                        <span className="cap-timeline__label">
+                          <span className="cap-timeline__label-full">{item.label}</span>
+                          <span className="cap-timeline__label-short">{item.shortLabel}</span>
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              {scrollMode && (
+                <p className="cap-cue" aria-hidden="true">
+                  <ArrowDown />
+                  Scroll to build the site
+                </p>
+              )}
+            </div>
+
             <div className="cap__layout">
               <div className="cap__copy">
                 <div className="cap-roles" style={scrollMode ? undefined : linkStyle} data-cap-roles>
@@ -301,37 +346,6 @@ export function ServicesSection() {
                   <CapabilityPreview />
                 </figure>
 
-                <div className="cap-rail" role="group" aria-label="Design-to-code stages">
-                  <span className="cap-rail__track" aria-hidden="true">
-                    <span className="cap-rail__fill" />
-                    <span className="cap-rail__head" />
-                  </span>
-                  {capabilityStages.map((item, index) => {
-                    const value = (index + 1) as CapabilityStage;
-                    return (
-                      <button
-                        className="cap-rail__step"
-                        type="button"
-                        aria-current={value === stage ? "step" : undefined}
-                        aria-label={`${scrollMode ? "Go to" : "Show"} stage ${item.number}: ${item.label}`}
-                        onClick={() => goToStage(value)}
-                        key={item.id}
-                      >
-                        <span className="cap-rail__number">{item.number}</span>
-                        <span className="cap-rail__label">
-                          <span className="cap-rail__label-full">{item.label}</span>
-                          <span className="cap-rail__label-short">{item.shortLabel}</span>
-                        </span>
-                      </button>
-                    );
-                  })}
-                  {scrollMode && (
-                    <p className="cap-cue" aria-hidden="true">
-                      <ArrowDown />
-                      Scroll to build the site
-                    </p>
-                  )}
-                </div>
               </div>
             </div>
           </div>

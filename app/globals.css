@@ -95,7 +95,13 @@
     --shape-radius-pill: 999px;
     --layout-container-wide: 1480px;
     --layout-container-copy: 720px;
-    --layout-hero-inset: clamp(24px, 3.8vw, 52px);
+    /*
+     * Hero card's outer gap. Up to laptop sizes this is the original clamp (24–52px); beyond that it
+     * grows with the viewport's *smaller* side (vmin), so the gap stays in proportion to the card on
+     * both axes on 24"/27" displays instead of freezing at 52px. 1440×900 → 52px, 1920×1080 → 60px,
+     * 2560×1440 → 81px; capped at 112px for very large screens.
+     */
+    --layout-hero-inset: min(max(clamp(24px, 3.8vw, 52px), 5.6vmin), 112px);
     --layout-page-gutter: clamp(20px, 5vw, 84px);
     --layout-section-space: clamp(76px, 9vw, 136px);
     --layout-dock-clearance: calc(5.5rem + env(safe-area-inset-bottom));
@@ -290,6 +296,15 @@
 
   .experience-story {
     background: var(--surface-warm);
+  }
+
+  /*
+   * The card fills the stage minus the same inset on every side. Its width cap follows the card's
+   * height (a 2.4:1 ceiling) rather than a fixed 1600px, so wide desktops keep equal side gaps and
+   * only ultra-wide screens get extra horizontal margin.
+   */
+  .experience-story [data-hero-card] {
+    max-width: max(1600px, calc((100svh - 2 * var(--layout-hero-inset)) * 2.4));
   }
 
   .profile-notch {
@@ -504,11 +519,22 @@
     transition: background-color 280ms ease;
   }
 
+  /*
+   * Hero experience chip: gold metallic plate, sharing the Journey award cards' treatment via
+   * <AwardBadge> (pointer tilt, specular glare, prismatic foil = .journey-award-card__foil).
+   * Values here only adapt that effect to a 40px pill.
+   */
   .hero-experience-chip {
-    --mx: 50%;
-    --my: 50%;
+    --award-glow: var(--champagne-gold);
+    --award-pointer-x: 50%;
+    --award-pointer-y: 50%;
+    --award-tilt-x: 0deg;
+    --award-tilt-y: 0deg;
+    --award-glare-opacity: 0.42;
+    --award-lift: 0px;
     position: relative;
     isolation: isolate;
+    overflow: hidden;
     border: 1px solid rgba(255, 249, 225, 0.92);
     background:
       linear-gradient(112deg, rgba(255, 255, 255, 0.46), transparent 28%, rgba(111, 74, 21, 0.08) 52%, transparent 72%),
@@ -518,26 +544,14 @@
       0 8px 22px rgba(141, 97, 31, 0.18),
       inset 0 1px 0 rgba(255, 255, 255, 0.92),
       inset 0 -1px 0 rgba(124, 81, 23, 0.18);
+    transform: perspective(600px) rotateX(var(--award-tilt-x)) rotateY(var(--award-tilt-y)) translateY(var(--award-lift));
+    transform-style: preserve-3d;
+    transition:
+      transform 240ms var(--ease-out),
+      box-shadow 240ms ease;
   }
 
-  .hero-experience-chip::before {
-    position: absolute;
-    z-index: -1;
-    inset: 0;
-    border-radius: inherit;
-    background: radial-gradient(
-      ellipse 120px 54px at var(--mx) var(--my),
-      color-mix(in srgb, var(--champagne-gold) 52%, transparent),
-      color-mix(in srgb, var(--champagne-gold) 34%, transparent) 46%,
-      transparent 76%
-    );
-    filter: blur(16px);
-    opacity: 0;
-    transition: opacity 220ms ease;
-    content: "";
-    pointer-events: none;
-  }
-
+  /* Brushed-metal grain (the chip's own texture). */
   .hero-experience-chip::after {
     position: absolute;
     z-index: 0;
@@ -555,14 +569,24 @@
     pointer-events: none;
   }
 
-  .hero-experience-chip > * {
-    position: relative;
-    z-index: 1;
+  /* Shared foil, toned down for a small surface so the label stays crisp. */
+  .hero-experience-chip .journey-award-card__foil {
+    opacity: calc(var(--award-glare-opacity) * 0.55);
   }
 
-  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-    .hero-experience-chip:hover::before {
-      opacity: 1;
+  .hero-experience-chip > :not(.journey-award-card__foil) {
+    position: relative;
+    z-index: 2;
+  }
+
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    .hero-experience-chip:hover {
+      --award-lift: -2px;
+      box-shadow:
+        0 12px 26px rgba(141, 97, 31, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.96),
+        inset 0 -1px 0 rgba(124, 81, 23, 0.2);
+      will-change: transform;
     }
   }
 
@@ -763,7 +787,6 @@
       box-shadow: none !important;
     }
 
-    .hero-experience-chip::before,
     .hero-experience-chip::after {
       display: none;
     }
@@ -842,14 +865,17 @@
     margin-top: clamp(4px, 1.5vw, 20px);
   }
 
+  /* Sticky stage: timeline on top (centred), the two-column journey below it. */
   .cap[data-mode="scroll"] .cap__sticky {
     position: sticky;
     top: 0;
     display: flex;
     height: 100vh;
     height: 100svh;
-    align-items: center;
-    padding-block: 68px calc(var(--layout-dock-clearance) - 4px);
+    flex-direction: column;
+    justify-content: center;
+    gap: clamp(22px, 3.4vh, 36px);
+    padding-block: 64px calc(var(--layout-dock-clearance) - 4px);
   }
 
   .cap__layout {
@@ -878,9 +904,8 @@
     margin: 0;
   }
 
-  .cap[data-mode="scroll"] .cap__figure,
-  .cap[data-mode="scroll"] .cap-rail {
-    max-width: calc((100svh - 260px) * 1.6);
+  .cap[data-mode="scroll"] .cap__figure {
+    max-width: calc((100svh - 300px) * 1.6);
   }
 
   /* Roles (left column) */
@@ -1076,74 +1101,52 @@
     line-height: 1.5;
   }
 
-  /* Stage rail (below the preview) */
   /*
-   * Stage rail. --cap-p (0–1) is the journey position: scrubbed by scroll in scroll mode (piecewise,
-   * so the marker meets each step exactly as its stage begins), stepped per stage in static mode.
+   * Stage timeline (top-centre of the sticky stage). --cap-p (0–1) is the journey position: in scroll
+   * mode it is scrubbed piecewise by the same timeline as the preview (each quarter = one stage, so a
+   * segment starts filling exactly when its stage begins and runs backwards on reverse scroll); in
+   * static mode it steps to the end of the shown stage. Segment i fills with clamp(p·4 − i).
    */
-  .cap-rail {
+  .cap[data-mode="static"][data-stage="1"] { --cap-p: 0.25; }
+  .cap[data-mode="static"][data-stage="2"] { --cap-p: 0.5; }
+  .cap[data-mode="static"][data-stage="3"] { --cap-p: 0.75; }
+
+  .cap-timeline-wrap {
     position: relative;
-    display: grid;
-    width: 100%;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    margin-top: clamp(14px, 1.6vw, 20px);
-    container: cap-rail / inline-size;
-  }
-
-  .cap[data-mode="static"][data-stage="1"] { --cap-p: 0.125; }
-  .cap[data-mode="static"][data-stage="2"] { --cap-p: 0.375; }
-  .cap[data-mode="static"][data-stage="3"] { --cap-p: 0.625; }
-
-  .cap-rail__track {
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 0;
-    height: 1px;
-    background: var(--line);
-  }
-
-  .cap-rail__fill {
-    position: absolute;
-    inset: 0;
-    background: var(--accent);
-    transform: scaleX(var(--cap-p, 1));
-    transform-origin: left;
-  }
-
-  /* The marker rides the fill: it moves only when the page scrolls, and backwards when it does. */
-  .cap-rail__head {
-    position: absolute;
-    z-index: 1;
-    top: 0;
-    left: 0;
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    background: var(--accent);
-    box-shadow:
-      0 0 0 3px var(--surface-warm),
-      0 0 0 4px color-mix(in srgb, var(--accent) 30%, transparent);
-    transform: translate(calc(var(--cap-p, 1) * 100cqw - 50%), -50%);
-  }
-
-  .cap[data-mode="static"] .cap-rail__fill {
-    transition: transform 600ms var(--ease-out);
-  }
-
-  .cap[data-mode="static"] .cap-rail__head {
-    display: none;
-  }
-
-  .cap-rail__step {
-    position: relative;
+    z-index: 3;
     display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .cap[data-mode="static"] .cap-timeline-wrap {
+    margin-bottom: clamp(28px, 3.4vw, 44px);
+  }
+
+  .cap-timeline {
+    display: grid;
+    width: min(920px, 100%);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(8px, 1.3vw, 18px);
+    padding: 14px clamp(14px, 1.8vw, 22px) 6px;
+    border: 1px solid color-mix(in srgb, var(--midnight-ink) 8%, transparent);
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--pure-white) 78%, transparent);
+    box-shadow:
+      0 12px 32px -20px rgba(17, 24, 39, 0.28),
+      inset 0 1px 0 var(--pure-white);
+    container: cap-timeline / inline-size;
+  }
+
+  .cap-timeline__step {
+    display: grid;
     min-width: 0;
     min-height: 44px;
-    align-items: baseline;
-    gap: 7px;
-    padding: 12px 8px 0 0;
+    align-content: start;
+    gap: 10px;
+    padding: 0 0 8px;
     border: 0;
+    border-radius: 10px;
     background: transparent;
     color: var(--slate);
     font: inherit;
@@ -1152,107 +1155,128 @@
     transition: color 240ms var(--ease-out);
   }
 
-  .cap-rail__step::before {
+  .cap-timeline__bar {
+    position: relative;
+    display: block;
+    height: 4px;
+    overflow: hidden;
+    border-radius: var(--shape-radius-pill);
+    background: color-mix(in srgb, var(--midnight-ink) 9%, transparent);
+  }
+
+  .cap-timeline__fill {
     position: absolute;
-    top: -3px;
-    left: 0;
-    width: 7px;
-    height: 7px;
-    border: 1px solid var(--line-strong);
-    border-radius: 50%;
-    background: var(--surface-warm);
-    content: "";
-    transition:
-      background-color 300ms var(--ease-out),
-      border-color 300ms var(--ease-out),
-      box-shadow 300ms var(--ease-out);
+    inset: 0;
+    border-radius: inherit;
+    background: var(--voltage-violet);
+    transform: scaleX(clamp(0, calc(var(--cap-p, 1) * 4 - var(--i, 0)), 1));
+    transform-origin: left;
   }
 
-  /* Completed stages */
-  .cap[data-stage="2"] .cap-rail__step:nth-of-type(-n + 1),
-  .cap[data-stage="3"] .cap-rail__step:nth-of-type(-n + 2),
-  .cap[data-stage="4"] .cap-rail__step:nth-of-type(-n + 3) {
-    color: var(--graphite);
+  .cap[data-mode="static"] .cap-timeline__fill {
+    transition: transform 600ms var(--ease-out);
   }
 
-  .cap[data-stage="2"] .cap-rail__step:nth-of-type(-n + 1)::before,
-  .cap[data-stage="3"] .cap-rail__step:nth-of-type(-n + 2)::before,
-  .cap[data-stage="4"] .cap-rail__step:nth-of-type(-n + 3)::before {
-    border-color: var(--accent);
+  .cap-timeline__meta {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    gap: 8px;
   }
 
-  .cap[data-mode="scroll"][data-stage="2"] .cap-rail__step:nth-of-type(-n + 1)::before,
-  .cap[data-mode="scroll"][data-stage="3"] .cap-rail__step:nth-of-type(-n + 2)::before,
-  .cap[data-mode="scroll"][data-stage="4"] .cap-rail__step:nth-of-type(-n + 3)::before {
-    background: var(--accent);
-  }
-
-  /* Current stage */
-  .cap-rail__step[aria-current="step"] {
-    color: var(--midnight-ink);
-  }
-
-  .cap-rail__step[aria-current="step"]::before {
-    border-color: var(--accent);
-    background: var(--accent);
-  }
-
-  .cap[data-mode="static"] .cap-rail__step[aria-current="step"]::before {
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent);
-  }
-
-  .cap-rail__step:focus-visible {
-    border-radius: 6px;
-    outline: 2px solid var(--voltage-violet);
-    outline-offset: 3px;
-  }
-
-  .cap-rail__number {
-    color: var(--lavender-mist);
+  .cap-timeline__number {
+    flex: none;
+    color: var(--mist);
     font-family: var(--font-mono);
-    font-size: 9px;
+    font-size: 10px;
     letter-spacing: 0.08em;
+    transition: color 240ms var(--ease-out);
   }
 
-  .cap-rail__step[aria-current="step"] .cap-rail__number {
-    color: var(--voltage-violet);
-  }
-
-  .cap-rail__label {
+  .cap-timeline__label {
     min-width: 0;
     overflow: hidden;
-    font-size: 12px;
+    font-size: 13.5px;
     font-weight: 650;
     letter-spacing: -0.02em;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .cap-rail__label-short {
-    display: none;
+  /* Completed: lighter violet bar, readable label. */
+  .cap[data-stage="2"] .cap-timeline__step:nth-of-type(-n + 1),
+  .cap[data-stage="3"] .cap-timeline__step:nth-of-type(-n + 2),
+  .cap[data-stage="4"] .cap-timeline__step:nth-of-type(-n + 3) {
+    color: var(--graphite);
   }
 
-  @container cap-rail (max-width: 620px) {
-    .cap-rail__label-full {
-      display: none;
-    }
+  .cap[data-stage="2"] .cap-timeline__step:nth-of-type(-n + 1) :is(.cap-timeline__fill),
+  .cap[data-stage="3"] .cap-timeline__step:nth-of-type(-n + 2) :is(.cap-timeline__fill),
+  .cap[data-stage="4"] .cap-timeline__step:nth-of-type(-n + 3) :is(.cap-timeline__fill) {
+    background: var(--lavender-mist);
+  }
 
-    .cap-rail__label-short {
-      display: inline;
-    }
+  .cap[data-stage="2"] .cap-timeline__step:nth-of-type(-n + 1) .cap-timeline__number,
+  .cap[data-stage="3"] .cap-timeline__step:nth-of-type(-n + 2) .cap-timeline__number,
+  .cap[data-stage="4"] .cap-timeline__step:nth-of-type(-n + 3) .cap-timeline__number {
+    color: var(--lavender-mist);
+  }
+
+  /* Active: full accent bar (filling with scroll), dark label, violet number. */
+  .cap-timeline__step[aria-current="step"] {
+    color: var(--midnight-ink);
+  }
+
+  .cap-timeline__step[aria-current="step"] .cap-timeline__number {
+    color: var(--voltage-violet);
+  }
+
+  .cap-timeline__step[aria-current="step"] .cap-timeline__bar {
+    background: color-mix(in srgb, var(--voltage-violet) 16%, transparent);
+  }
+
+  .cap-timeline__step:focus-visible {
+    outline: 2px solid var(--voltage-violet);
+    outline-offset: 4px;
   }
 
   @media (hover: hover) {
-    .cap-rail__step:hover {
+    .cap-timeline__step:not([aria-current="step"]):hover {
       color: var(--ultra-violet);
     }
   }
 
-  /* Scroll cue: present on arrival, hands over to the rail marker as the build gets underway. */
+  .cap-timeline__label-short {
+    display: none;
+  }
+
+  @container cap-timeline (max-width: 640px) {
+    .cap-timeline__label-full {
+      display: none;
+    }
+
+    .cap-timeline__label-short {
+      display: inline;
+    }
+  }
+
+  @container cap-timeline (max-width: 420px) {
+    .cap-timeline__meta {
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .cap-timeline__label {
+      max-width: 100%;
+      font-size: 11.5px;
+    }
+  }
+
+  /* Scroll cue: under the timeline on arrival, fades once the build is underway. */
   .cap-cue {
     position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
+    top: calc(100% + 7px);
+    left: 50%;
     display: inline-flex;
     align-items: center;
     gap: 7px;
@@ -1264,6 +1288,7 @@
     text-transform: uppercase;
     white-space: nowrap;
     opacity: var(--cap-cue, 1);
+    transform: translateX(-50%);
     pointer-events: none;
   }
 
@@ -2597,19 +2622,13 @@
       font-size: 8.5px;
     }
 
-    .cap-rail__step {
-      flex-direction: column;
-      gap: 2px;
+    .cap-timeline {
+      padding: 11px 12px 4px;
+      border-radius: 16px;
     }
 
-    /* Room for the scroll cue between the rail and the roles. */
-    .cap[data-mode="scroll"] .cap-rail {
-      margin-bottom: 16px;
-    }
-
-    .cap-rail__label {
-      max-width: 100%;
-      font-size: 10.5px;
+    .cap[data-mode="scroll"] .cap__sticky {
+      gap: 26px;
     }
 
     .cap-phone {
