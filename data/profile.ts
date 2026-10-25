@@ -70,20 +70,74 @@ export const navigation = [
   { id: "contact", label: "Contact", index: "05" },
 ] as const;
 
+/**
+ * Capabilities, ordered as the design-to-code journey runs.
+ * `activeStages` = journey stages where the role leads; `skill.stage` = the stage that skill is highlighted in.
+ */
 export const services = [
   {
-    id: "frontend-development",
+    id: "uiux-design",
     number: "01",
-    title: "Frontend Developer",
-    skills: ["React", "Next.js", "TypeScript"],
+    title: "UI/UX Designer",
+    summary: "Shaping how a product works, then how it looks.",
+    activeStages: [1, 2, 4],
+    skills: [
+      { label: "User flows", stage: 1 },
+      { label: "Wireframes", stage: 1 },
+      { label: "Information architecture", stage: 1 },
+      { label: "Visual design", stage: 2 },
+      { label: "Prototyping", stage: 2 },
+    ],
   },
   {
-    id: "uiux-design",
+    id: "frontend-development",
     number: "02",
-    title: "UI/UX Designer",
-    skills: ["User flows", "Wireframes", "Prototypes"],
+    title: "Frontend Developer",
+    summary: "Turning that design into fast, accessible React.",
+    activeStages: [3, 4],
+    skills: [
+      { label: "React", stage: 3 },
+      { label: "Next.js", stage: 3 },
+      { label: "TypeScript", stage: 3 },
+      { label: "Motion & animation", stage: 4 },
+      { label: "Performance & accessibility", stage: 4 },
+    ],
   },
 ] as const;
+
+/** The four stages of the Capabilities scroll journey (sample concept site: "Lumen"). */
+export const capabilityStages = [
+  {
+    id: "wireframe",
+    number: "01",
+    label: "Wireframe",
+    tool: "Figma — Lumen / Wireframe",
+    description: "Structure first: user flows, hierarchy and layout before any visual style.",
+  },
+  {
+    id: "visual-design",
+    number: "02",
+    label: "Visual design",
+    tool: "Figma — Lumen / UI",
+    description: "Type, colour and spacing give that structure its identity, without moving it.",
+  },
+  {
+    id: "frontend-build",
+    number: "03",
+    label: "Frontend build",
+    tool: "localhost:3000",
+    description: "The approved design becomes typed, reusable React components with real states.",
+  },
+  {
+    id: "launch",
+    number: "04",
+    label: "Launch",
+    tool: "lumen.studio",
+    description: "One idea, carried from the first wireframe to a polished, responsive product.",
+  },
+] as const;
+
+export type CapabilityStage = 1 | 2 | 3 | 4;
 
 export const journey = [
   {
