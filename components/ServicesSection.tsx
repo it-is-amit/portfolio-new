@@ -2,6 +2,7 @@
 
 import { useCallback, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { CSSProperties } from "react";
+import { ArrowDown } from "lucide-react";
 import { CapabilityPreview } from "@/components/CapabilityPreview";
 import { useLenis } from "@/components/SmoothScrollProvider";
 import { usePrefersReducedMotion } from "@/components/ui/shader-canvas-utils/motion";
@@ -15,11 +16,16 @@ import { gsap, registerGsapPlugins, revealSectionHeading, ScrollTrigger } from "
  * neighbouring ScrollTriggers. Reduced motion or short viewports get a static, tab-driven version.
  */
 const SCROLL_JOURNEY_QUERY = "(prefers-reduced-motion: no-preference) and (min-height: 600px)";
-/** Progress at which each stage begins (index 0 = stage 1). Mirrors the timeline positions below / 10. */
-const STAGE_STARTS = [0, 0.17, 0.47, 0.8] as const;
-/** Progress used when a stage button is pressed: the quiet "hold" inside each stage. */
-const STAGE_FOCUS = [0.04, 0.4, 0.71, 0.97] as const;
+/** Timeline unit at which each stage begins (index 0 = stage 1). The timeline is 10 units long. */
+const STAGE_UNITS = [0, 1.7, 4.7, 8] as const;
+/** Scroll progress at which each stage begins. */
+const STAGE_STARTS = STAGE_UNITS.map((unit) => unit / 10);
+/** Progress used when a stage button is pressed: the settled "hold" inside each stage. */
+const STAGE_FOCUS = [0.15, 0.44, 0.78, 0.97] as const;
+/** Static mode only: how far the role connector is filled at each stage. */
 const STAGE_LINK_FILL: Record<CapabilityStage, number> = { 1: 0, 2: 0.42, 3: 1, 4: 1 };
+/** Scroll windows for each skill chip, in DOM order (both roles). */
+const skillFocus = services.flatMap((service) => service.skills.map((skill) => skill.focus));
 
 function subscribeToQuery(query: string) {
   return (onChange: () => void) => {
@@ -66,12 +72,18 @@ export function ServicesSection() {
       if (!scrollMode) return;
 
       const preview = journey.querySelector<HTMLElement>("[data-cap-preview]");
-      const railFill = journey.querySelector<HTMLElement>("[data-cap-rail-fill]");
-      const slots = gsap.utils.toArray<HTMLElement>("[data-cap-slot]", journey);
-      const regions = gsap.utils.toArray<HTMLElement>("[data-cap-region]", journey);
-      if (!preview || !railFill || !slots.length) return;
+      const rolesWrap = journey.querySelector<HTMLElement>("[data-cap-roles]");
+      const all = (selector: string) => gsap.utils.toArray<HTMLElement>(selector, journey);
+      const fx = (...names: string[]) => all(names.map((name) => `[data-cap-fx="${name}"]`).join(","));
+      const slots = { type: all('[data-cap-slot="type"]'), control: all('[data-cap-slot="control"]'), image: all('[data-cap-slot="image"]') };
+      const builds = all("[data-cap-build]");
+      const regions = all("[data-cap-region]");
+      const roles = all("[data-cap-role]");
+      const skills = all("[data-cap-skill]");
+      if (!preview || !rolesWrap || !builds.length) return;
 
-      // Entry: the wireframe's regions draw in while the section scrolls into place.
+      // Entry: the layout regions (grid, nav rule, hero frame, project band) draw in while the
+      // section scrolls into place, so the very first scroll already moves the preview.
       gsap.fromTo(
         regions,
         { "--cap-r": 0 },
@@ -83,21 +95,8 @@ export function ServicesSection() {
         },
       );
 
-      gsap.set(preview, {
-        "--cap-d": 0,
-        "--cap-grid": 1,
-        "--cap-wfa": 1,
-        "--cap-uia": 0,
-        "--cap-dev": 0,
-        "--cap-ship": 0,
-        "--cap-nav": 0,
-        "--cap-cur": 0,
-        "--cap-press": 0,
-        "--cap-lift": 0,
-        "--cap-cx": 940,
-        "--cap-cy": 610,
-      });
-      gsap.set(slots, { "--cap-t": 0 });
+      // The journey's starting frame lives in CSS (`.cap[data-mode="scroll"] …` in globals.css), so
+      // every tween below reads its start value from there and never needs a gsap.set().
 
       const syncStage = (progress: number) => {
         const next = stageFromProgress(progress);
@@ -106,7 +105,9 @@ export function ServicesSection() {
         setScrollStage(next);
       };
 
-      // Timeline is 10 units long; unit / 10 = scroll progress (see STAGE_STARTS / STAGE_FOCUS).
+      // One timeline, 10 units long: unit / 10 = scroll progress (see STAGE_STARTS / STAGE_FOCUS).
+      // Every value below is scrubbed by scroll position, so pausing, reversing and jumping all
+      // land on the exact matching frame. No timers, no React state per frame.
       const timeline = gsap.timeline({
         defaults: { ease: "none" },
         scrollTrigger: {
@@ -118,28 +119,88 @@ export function ServicesSection() {
           onUpdate: (self) => syncStage(self.progress),
         },
       });
+      const show = (targets: HTMLElement[], at: number, duration = 0.22) =>
+        timeline.to(targets, { "--cap-o": 1, duration }, at);
+      const hide = (targets: HTMLElement[], at: number, duration = 0.22, stagger = 0) =>
+        timeline.to(targets, { "--cap-o": 0, duration, stagger }, at);
 
+      // Progress rail: piecewise, so the marker reaches each step exactly when its stage begins.
       timeline
-        .fromTo(railFill, { scaleX: 0 }, { scaleX: 1, duration: 10 }, 0)
-        // 01 → 02: placeholders are wiped into designed components, region by region.
-        .to(preview, { "--cap-wfa": 0, duration: 0.6 }, 1)
-        .to(preview, { "--cap-grid": 0, duration: 1.8 }, 1)
-        .to(preview, { "--cap-d": 1, duration: 2, ease: "power1.inOut" }, 1.1)
-        .to(slots, { "--cap-t": 1, duration: 1, ease: "power2.inOut", stagger: { amount: 1.2 } }, 1)
-        .to(preview, { "--cap-uia": 1, duration: 0.5 }, 2.9)
-        // 02 → 03: design annotations give way to components, states and a live cursor.
-        .to(preview, { "--cap-uia": 0, duration: 0.4 }, 4.6)
-        .to(preview, { "--cap-dev": 1, "--cap-nav": 1, duration: 0.6 }, 4.9)
-        .to(preview, { "--cap-cur": 1, duration: 0.3 }, 5.4)
-        .to(preview, { "--cap-cx": 100, "--cap-cy": 300, duration: 1, ease: "power2.inOut" }, 5.4)
-        .to(preview, { "--cap-press": 1, duration: 0.22 }, 6.4)
-        .to(preview, { "--cap-press": 0, duration: 0.22 }, 6.66)
-        .to(preview, { "--cap-cx": 498, "--cap-cy": 474, duration: 0.8, ease: "power2.inOut" }, 6.9)
-        .to(preview, { "--cap-lift": 1, duration: 0.3 }, 7.4)
-        // 03 → 04: tooling disappears, the product gains depth and its responsive sibling.
-        .to(preview, { "--cap-dev": 0, "--cap-cur": 0, "--cap-lift": 0, duration: 0.4 }, 8)
-        .to(preview, { "--cap-ship": 1, duration: 1, ease: "power2.out" }, 8.2)
-        .to({}, { duration: 0.8 }, 9.2);
+        .to(journey, { "--cap-p": 0.25, duration: STAGE_UNITS[1] }, 0)
+        .to(journey, { "--cap-p": 0.5, duration: STAGE_UNITS[2] - STAGE_UNITS[1] }, STAGE_UNITS[1])
+        .to(journey, { "--cap-p": 0.75, duration: STAGE_UNITS[3] - STAGE_UNITS[2] }, STAGE_UNITS[2])
+        .to(journey, { "--cap-p": 1, duration: 10 - STAGE_UNITS[3] }, STAGE_UNITS[3])
+        // The scroll cue hands over to the moving marker once the wireframe is underway.
+        .to(journey, { "--cap-cue": 0, duration: 0.9 }, 0.25);
+
+      // 01 · Wireframe (0 → 1.7): structure is placed piece by piece.
+      const build = (group: string, at: number, stagger = 0) =>
+        timeline.to(all(`[data-cap-build="${group}"]`), { "--cap-b": 1, duration: 0.3, ease: "power2.out", stagger }, at);
+      build("nav", 0.05, 0.06);
+      build("title", 0.3);
+      build("copy", 0.42, 0.07);
+      build("media", 0.55);
+      build("actions", 0.72);
+      build("head", 0.86, 0.06);
+      build("card", 0.95, 0.09);
+      show(fx("flow"), 1.15, 0.3);
+
+      // 02 · UI design (1.7 → 4.7): type, then colour, then imagery, then refinement.
+      hide(fx("label", "frame", "flow"), 1.7, 0.3);
+      timeline
+        .to(preview, { "--cap-grid": 0, duration: 1.4 }, 1.75)
+        .to(slots.type, { "--cap-t": 1, duration: 0.45, ease: "power2.inOut", stagger: { amount: 0.75 } }, 1.7)
+        .to(preview, { "--cap-c": 1, duration: 0.85, ease: "power1.inOut" }, 2.35)
+        .to(slots.control, { "--cap-t": 1, duration: 0.45, ease: "power2.inOut", stagger: { amount: 0.3 } }, 2.5)
+        .to(slots.image, { "--cap-t": 1, duration: 0.5, ease: "power2.inOut", stagger: { amount: 0.35 } }, 2.95)
+        .to(preview, { "--cap-d": 1, duration: 0.8, ease: "power1.inOut" }, 3.55);
+      show(fx("select"), 2.0);
+      show(fx("tag"), 2.8);
+      show(fx("redline"), 3.7);
+      hide(fx("select", "tag", "redline"), 4.5, 0.25);
+
+      // 03 · Frontend (4.7 → 8): components register one by one, then real states are exercised.
+      show(fx("outline-nav"), 4.8, 0.25);
+      timeline.to(preview, { "--cap-nav": 1, duration: 0.3 }, 4.85);
+      show(fx("toast"), 4.95, 0.25);
+      show(fx("outline-hero"), 5.1, 0.25);
+      show(fx("outline-projects"), 5.4, 0.25);
+      timeline
+        .to(preview, { "--cap-cur": 1, duration: 0.2 }, 5.55)
+        .to(preview, { "--cap-cx": 632, "--cap-cy": 32, duration: 0.5, ease: "power2.inOut" }, 5.55)
+        .to(preview, { "--cap-hn": 1, duration: 0.15 }, 6.0)
+        .to(preview, { "--cap-cx": 100, "--cap-cy": 300, duration: 0.6, ease: "power2.inOut" }, 6.25)
+        .to(preview, { "--cap-hn": 0, duration: 0.15 }, 6.3)
+        .to(preview, { "--cap-press": 1, duration: 0.17 }, 6.88)
+        .to(preview, { "--cap-press": 0, duration: 0.17 }, 7.08)
+        .to(preview, { "--cap-cx": 498, "--cap-cy": 474, duration: 0.5, ease: "power2.inOut" }, 7.3)
+        .to(preview, { "--cap-lift": 1, duration: 0.23 }, 7.72);
+
+      // 04 · Final product (8 → 10): tooling steps away, depth and the responsive view arrive.
+      hide(fx("toast"), 7.9, 0.2);
+      hide(fx("outline-projects", "outline-hero", "outline-nav"), 8.0, 0.25, 0.08);
+      timeline
+        .to(preview, { "--cap-cur": 0, "--cap-lift": 0, duration: 0.3 }, 8.0)
+        .to(preview, { "--cap-ship": 1, duration: 0.8, ease: "power2.out" }, 8.25);
+      timeline.to(fx("phone"), { "--cap-o": 1, duration: 0.8, ease: "power2.out" }, 8.7);
+
+      // Left column, on the same clock: the connector fills from design into code, roles hand
+      // over gradually, and each skill lights up while the preview shows it at work.
+      timeline.to(rolesWrap, { "--cap-link": 1, duration: STAGE_UNITS[2] - STAGE_UNITS[1] + 0.2 }, STAGE_UNITS[1]);
+      if (roles[0] && roles[1]) {
+        timeline
+          .to(roles[0], { "--cap-a": 0, duration: 0.4 }, 4.55)
+          .to(roles[1], { "--cap-a": 1, duration: 0.4 }, 4.6)
+          .to(roles[0], { "--cap-a": 1, duration: 0.45 }, 8.05);
+      }
+      skillFocus.forEach(([from, to], index) => {
+        const skill = skills[index];
+        if (!skill) return;
+        timeline.to(skill, { "--cap-k": 1, duration: 0.25 }, from * 10);
+        if (to < 1) timeline.to(skill, { "--cap-k": 0, duration: 0.25 }, to * 10);
+      });
+
+      timeline.to({}, { duration: 0.01 }, 9.99);
 
       triggerRef.current = timeline.scrollTrigger ?? null;
       syncStage(timeline.scrollTrigger?.progress ?? 0);
@@ -193,11 +254,11 @@ export function ServicesSection() {
           <div className="cap__sticky">
             <div className="cap__layout">
               <div className="cap__copy">
-                <div className="cap-roles" style={linkStyle}>
+                <div className="cap-roles" style={scrollMode ? undefined : linkStyle} data-cap-roles>
                   {services.map((service, index) => {
                     const active = (service.activeStages as readonly number[]).includes(stage);
                     return (
-                      <article className={`cap-role${active ? " is-active" : ""}`} key={service.id}>
+                      <article className={`cap-role${active ? " is-active" : ""}`} data-cap-role key={service.id}>
                         {index === 0 && <span className="cap-role__link" aria-hidden="true" />}
                         <span className="cap-role__number" aria-hidden="true">{service.number}</span>
                         <div className="cap-role__content">
@@ -205,7 +266,13 @@ export function ServicesSection() {
                           <p className="cap-role__summary">{service.summary}</p>
                           <ul aria-label={`${service.title} skills`}>
                             {service.skills.map((skill) => (
-                              <li data-focus={skill.stage === stage ? "true" : undefined} key={skill.label}>{skill.label}</li>
+                              <li
+                                data-cap-skill
+                                data-focus={(skill.stages as readonly number[]).includes(stage) ? "true" : undefined}
+                                key={skill.label}
+                              >
+                                {skill.label}
+                              </li>
                             ))}
                           </ul>
                         </div>
@@ -235,7 +302,10 @@ export function ServicesSection() {
                 </figure>
 
                 <div className="cap-rail" role="group" aria-label="Design-to-code stages">
-                  <span className="cap-rail__track" aria-hidden="true"><span className="cap-rail__fill" data-cap-rail-fill /></span>
+                  <span className="cap-rail__track" aria-hidden="true">
+                    <span className="cap-rail__fill" />
+                    <span className="cap-rail__head" />
+                  </span>
                   {capabilityStages.map((item, index) => {
                     const value = (index + 1) as CapabilityStage;
                     return (
@@ -248,10 +318,19 @@ export function ServicesSection() {
                         key={item.id}
                       >
                         <span className="cap-rail__number">{item.number}</span>
-                        <span className="cap-rail__label">{item.label}</span>
+                        <span className="cap-rail__label">
+                          <span className="cap-rail__label-full">{item.label}</span>
+                          <span className="cap-rail__label-short">{item.shortLabel}</span>
+                        </span>
                       </button>
                     );
                   })}
+                  {scrollMode && (
+                    <p className="cap-cue" aria-hidden="true">
+                      <ArrowDown />
+                      Scroll to build the site
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

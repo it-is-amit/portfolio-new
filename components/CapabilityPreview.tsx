@@ -14,6 +14,11 @@ import { capabilityStages } from "@/data/profile";
  *
  * The site is drawn on a 960 × 600 design canvas; `--u` (1/960 of the viewport's container
  * width) keeps every measurement proportional, so the mock scales like a real screenshot.
+ *
+ * Hooks read by the scroll timeline (nothing here re-renders on scroll):
+ * - `data-cap-build`: wireframe build order (nav → title → copy → media → actions → head → card)
+ * - `data-cap-slot`: which design pass reveals the slot (type → control → image)
+ * - `data-cap-fx`: annotations and tooling that fade in/out on their own scroll interval
  */
 
 type ProjectFilter = "All" | "Residential" | "Workspace";
@@ -28,16 +33,21 @@ const projects = [
 
 const navLinks = ["Work", "Studio", "Journal", "Contact"] as const;
 
+type SlotKind = "type" | "control" | "image";
+type BuildGroup = "nav" | "title" | "copy" | "media" | "actions" | "head";
+
 type SlotProps = {
   className?: string;
+  kind: SlotKind;
+  build?: BuildGroup;
   wireframe: ReactNode;
   design: ReactNode;
   children?: ReactNode;
 };
 
-function Slot({ className, wireframe, design, children }: SlotProps) {
+function Slot({ className, kind, build, wireframe, design, children }: SlotProps) {
   return (
-    <div className={`cap-slot${className ? ` ${className}` : ""}`} data-cap-slot>
+    <div className={`cap-slot${className ? ` ${className}` : ""}`} data-cap-slot={kind} data-cap-build={build}>
       <div className="cap-slot__wf">{wireframe}</div>
       <div className="cap-slot__hi">{design}</div>
       {children}
@@ -60,7 +70,7 @@ function WireBox({ label }: { label: string }) {
 
 function DevOutline({ label, variant }: { label: string; variant: "nav" | "hero" | "projects" }) {
   return (
-    <span className={`cap-dev-outline cap-dev-outline--${variant}`}>
+    <span className={`cap-dev-outline cap-dev-outline--${variant}`} data-cap-fx={`outline-${variant}`}>
       <span className="cap-dev-outline__label">{label}</span>
     </span>
   );
@@ -68,7 +78,7 @@ function DevOutline({ label, variant }: { label: string; variant: "nav" | "hero"
 
 function PhonePreview() {
   return (
-    <div className="cap-phone">
+    <div className="cap-phone" data-cap-fx="phone">
       <div className="cap-phone__screen">
         <div className="cap-phone__site">
           <div className="cap-phone__status"><span>9:41</span><i /></div>
@@ -123,11 +133,15 @@ function CapabilityPreviewComponent() {
               <DevOutline label="<Navbar />" variant="nav" />
               <Slot
                 className="cap-nav__logo"
+                kind="type"
+                build="nav"
                 wireframe={<span className="cap-wf-row"><i className="cap-wf-dot" /><Bar width={54} height={10} /></span>}
                 design={<span className="cap-logo"><i className="cap-logo__mark" />Lumen</span>}
               />
               <Slot
                 className="cap-nav__links"
+                kind="type"
+                build="nav"
                 wireframe={<span className="cap-wf-row cap-wf-row--links">{navLinks.map((link) => <Bar width={34} key={link} />)}</span>}
                 design={
                   <span className="cap-nav__list">
@@ -139,6 +153,8 @@ function CapabilityPreviewComponent() {
               />
               <Slot
                 className="cap-nav__cta"
+                kind="control"
+                build="nav"
                 wireframe={<span className="cap-wf-button cap-wf-button--sm"><Bar width={70} /></span>}
                 design={<span className="cap-button cap-button--dark cap-button--sm">Start a project</span>}
               />
@@ -146,31 +162,40 @@ function CapabilityPreviewComponent() {
 
             {/* Hero */}
             <section className="cap-region cap-hero" data-cap-region>
-              <span className="cap-wf-label cap-wf-label--hero">Hero</span>
+              <span className="cap-wf-frame" data-cap-fx="frame" />
+              <span className="cap-wf-label cap-wf-label--hero" data-cap-fx="label">Hero</span>
               <DevOutline label="<Hero />" variant="hero" />
               <div className="cap-hero__copy">
                 <Slot
                   className="cap-hero__eyebrow"
+                  kind="type"
+                  build="copy"
                   wireframe={<Bar width={150} height={8} />}
                   design={<span className="cap-eyebrow">Architecture &amp; Interiors</span>}
                 />
                 <Slot
                   className="cap-hero__title"
+                  kind="type"
+                  build="title"
                   wireframe={<span className="cap-wf-stack cap-wf-stack--title"><Bar width={400} height={34} /><Bar width={290} height={34} /></span>}
                   design={<p className="cap-h1">Calm spaces, made<br />to be <span>lived in.</span></p>}
                 >
-                  <span className="cap-select" aria-hidden="true">
+                  <span className="cap-select" aria-hidden="true" data-cap-fx="select">
                     <i /><i /><i /><i />
                     <span className="cap-select__badge">428 × 85</span>
                   </span>
                 </Slot>
                 <Slot
                   className="cap-hero__text"
+                  kind="type"
+                  build="copy"
                   wireframe={<span className="cap-wf-stack"><Bar width={330} /><Bar width={250} /></span>}
                   design={<p className="cap-body">An independent studio designing homes and workplaces with light, texture and restraint.</p>}
                 />
                 <Slot
                   className="cap-hero__actions"
+                  kind="control"
+                  build="actions"
                   wireframe={
                     <span className="cap-wf-row cap-wf-row--actions">
                       <span className="cap-wf-button"><Bar width={64} /></span>
@@ -184,11 +209,13 @@ function CapabilityPreviewComponent() {
                     </span>
                   }
                 >
-                  <span className="cap-component-tag">Button / Primary</span>
+                  <span className="cap-component-tag" data-cap-fx="tag">Button / Primary</span>
                 </Slot>
               </div>
               <Slot
                 className="cap-hero__media"
+                kind="image"
+                build="media"
                 wireframe={<WireBox label="Hero image · 16:10" />}
                 design={
                   <span className="cap-media">
@@ -201,16 +228,20 @@ function CapabilityPreviewComponent() {
             {/* Projects */}
             <section className="cap-region cap-projects" data-cap-region>
               <span className="cap-projects__band" />
-              <span className="cap-wf-label cap-wf-label--projects">Projects · 3-up grid</span>
+              <span className="cap-wf-label cap-wf-label--projects" data-cap-fx="label">Projects · 3-up grid</span>
               <DevOutline label="<ProjectGrid />" variant="projects" />
               <div className="cap-projects__head">
                 <Slot
                   className="cap-projects__title"
+                  kind="type"
+                  build="head"
                   wireframe={<Bar width={150} height={14} />}
                   design={<p className="cap-h2">Selected projects <span>(03)</span></p>}
                 />
                 <Slot
                   className="cap-projects__filters"
+                  kind="control"
+                  build="head"
                   wireframe={
                     <span className="cap-wf-row cap-wf-row--chips">
                       <span className="cap-wf-chip" style={{ "--w": 40 } as CSSProperties} />
@@ -242,10 +273,12 @@ function CapabilityPreviewComponent() {
                     className="cap-card"
                     data-dim={filter !== "All" && project.type !== filter ? "true" : undefined}
                     data-lift={index === 1 ? "true" : undefined}
+                    data-cap-build="card"
                     key={project.id}
                   >
                     <Slot
                       className="cap-card__media"
+                      kind="image"
                       wireframe={<WireBox label="Image" />}
                       design={
                         <span className="cap-media cap-media--card">
@@ -255,11 +288,13 @@ function CapabilityPreviewComponent() {
                     />
                     <Slot
                       className="cap-card__title"
+                      kind="type"
                       wireframe={<Bar width={128} height={10} />}
                       design={<span className="cap-card__name">{project.title}<ArrowUpRight aria-hidden="true" /></span>}
                     />
                     <Slot
                       className="cap-card__meta"
+                      kind="type"
                       wireframe={<Bar width={86} height={7} />}
                       design={<span className="cap-card__info">{project.type} · {project.year}</span>}
                     />
@@ -270,20 +305,20 @@ function CapabilityPreviewComponent() {
 
             {/* Design-tool annotations drawn in canvas coordinates. */}
             <svg className="cap-overlay" viewBox="0 0 960 600" preserveAspectRatio="none" aria-hidden="true">
-              <g className="cap-overlay__flow">
+              <g className="cap-overlay__flow" data-cap-fx="flow">
                 <path d="M97 322 C 97 362, 150 396, 232 396" />
                 <path className="cap-overlay__arrowhead" d="M224 390 L 233 396 L 224 402" />
                 <rect x="112" y="344" width="58" height="15" rx="3" />
                 <text x="141" y="354.5">User flow</text>
               </g>
-              <g className="cap-overlay__redline">
+              <g className="cap-overlay__redline" data-cap-fx="redline">
                 <path d="M469 165 H 499 M469 159 V 171 M499 159 V 171" />
                 <rect x="472" y="145" width="24" height="13" rx="2" />
                 <text x="484" y="154.5">32</text>
               </g>
             </svg>
 
-            <span className="cap-toast"><i />Compiled successfully<em>next dev</em></span>
+            <span className="cap-toast" data-cap-fx="toast"><i />Compiled successfully<em>next dev</em></span>
 
             <svg className="cap-cursor" viewBox="0 0 20 20" aria-hidden="true">
               <path d="M3 2 L3 16 L7 12.4 L9.6 18 L12.2 16.8 L9.7 11.4 L15 11.2 Z" />

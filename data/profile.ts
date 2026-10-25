@@ -72,7 +72,10 @@ export const navigation = [
 
 /**
  * Capabilities, ordered as the design-to-code journey runs.
- * `activeStages` = journey stages where the role leads; `skill.stage` = the stage that skill is highlighted in.
+ * `activeStages` = stages where the role leads (static / reduced-motion view).
+ * `skill.stages` = stages where the skill is highlighted in the static view.
+ * `skill.focus` = [from, to] scroll progress (0–1) where the skill lights up in the scroll journey,
+ * aligned with the moment the preview shows that skill at work (see ServicesSection timeline).
  */
 export const services = [
   {
@@ -82,11 +85,11 @@ export const services = [
     summary: "Shaping how a product works, then how it looks.",
     activeStages: [1, 2, 4],
     skills: [
-      { label: "User flows", stage: 1 },
-      { label: "Wireframes", stage: 1 },
-      { label: "Information architecture", stage: 1 },
-      { label: "Visual design", stage: 2 },
-      { label: "Prototyping", stage: 2 },
+      { label: "User flows", stages: [1], focus: [0.115, 0.17] },
+      { label: "Wireframes", stages: [1], focus: [0.005, 0.17] },
+      { label: "Information architecture", stages: [1], focus: [0.035, 0.17] },
+      { label: "Visual design", stages: [2], focus: [0.175, 0.46] },
+      { label: "Prototyping", stages: [2], focus: [0.275, 0.46] },
     ],
   },
   {
@@ -96,11 +99,11 @@ export const services = [
     summary: "Turning that design into fast, accessible React.",
     activeStages: [3, 4],
     skills: [
-      { label: "React", stage: 3 },
-      { label: "Next.js", stage: 3 },
-      { label: "TypeScript", stage: 3 },
-      { label: "Motion & animation", stage: 4 },
-      { label: "Performance & accessibility", stage: 4 },
+      { label: "React", stages: [3], focus: [0.48, 0.8] },
+      { label: "Next.js", stages: [3], focus: [0.495, 0.8] },
+      { label: "TypeScript", stages: [3], focus: [0.51, 0.8] },
+      { label: "Motion & animation", stages: [3, 4], focus: [0.56, 1] },
+      { label: "Performance & accessibility", stages: [4], focus: [0.87, 1] },
     ],
   },
 ] as const;
@@ -110,28 +113,32 @@ export const capabilityStages = [
   {
     id: "wireframe",
     number: "01",
-    label: "Wireframe",
+    label: "UX & Wireframing",
+    shortLabel: "Wireframe",
     tool: "Figma — Lumen / Wireframe",
     description: "Structure first: user flows, hierarchy and layout before any visual style.",
   },
   {
     id: "visual-design",
     number: "02",
-    label: "Visual design",
+    label: "UI Design",
+    shortLabel: "UI Design",
     tool: "Figma — Lumen / UI",
-    description: "Type, colour and spacing give that structure its identity, without moving it.",
+    description: "Type, then colour, imagery and spacing give that structure its identity, without moving it.",
   },
   {
     id: "frontend-build",
     number: "03",
-    label: "Frontend build",
+    label: "Frontend Development",
+    shortLabel: "Frontend",
     tool: "localhost:3000",
     description: "The approved design becomes typed, reusable React components with real states.",
   },
   {
     id: "launch",
     number: "04",
-    label: "Launch",
+    label: "Final Product",
+    shortLabel: "Final",
     tool: "lumen.studio",
     description: "One idea, carried from the first wireframe to a polished, responsive product.",
   },
