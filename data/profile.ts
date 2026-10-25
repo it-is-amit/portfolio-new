@@ -50,7 +50,11 @@ export const copy = {
   scroll: "Scroll to explore",
   backToTop: "Back to top",
   preloaderLabel: "Senior Frontend Developer · UI/UX Designer",
-  servicesTitle: "Design meets engineering",
+  /** Capabilities heading, in two parts: the second renders in the accent colour. */
+  servicesTitleLead: "Designing Experiences.",
+  servicesTitleAccent: "Engineering Products.",
+  servicesSubtitle:
+    "UI/UX design and frontend development in one workflow: from user flows and wireframes to fast, accessible React interfaces.",
   contact: "Contact",
   journeyCaption: "From designer to frontend developer",
   journeyTitle: "Journey",
@@ -70,44 +74,6 @@ export const navigation = [
   { id: "contact", label: "Contact", index: "05" },
 ] as const;
 
-/**
- * Capabilities, ordered as the design-to-code journey runs.
- * `activeStages` = stages where the role leads (static / reduced-motion view).
- * `skill.stages` = stages where the skill is highlighted in the static view.
- * `skill.focus` = [from, to] scroll progress (0–1) where the skill lights up in the scroll journey,
- * aligned with the moment the preview shows that skill at work (see ServicesSection timeline).
- */
-export const services = [
-  {
-    id: "uiux-design",
-    number: "01",
-    title: "UI/UX Designer",
-    summary: "Shaping how a product works, then how it looks.",
-    activeStages: [1, 2, 4],
-    skills: [
-      { label: "User flows", stages: [1], focus: [0.115, 0.17] },
-      { label: "Wireframes", stages: [1], focus: [0.005, 0.17] },
-      { label: "Information architecture", stages: [1], focus: [0.035, 0.17] },
-      { label: "Visual design", stages: [2], focus: [0.175, 0.46] },
-      { label: "Prototyping", stages: [2], focus: [0.275, 0.46] },
-    ],
-  },
-  {
-    id: "frontend-development",
-    number: "02",
-    title: "Frontend Developer",
-    summary: "Turning that design into fast, accessible React.",
-    activeStages: [3, 4],
-    skills: [
-      { label: "React", stages: [3], focus: [0.48, 0.8] },
-      { label: "Next.js", stages: [3], focus: [0.495, 0.8] },
-      { label: "TypeScript", stages: [3], focus: [0.51, 0.8] },
-      { label: "Motion & animation", stages: [3, 4], focus: [0.56, 1] },
-      { label: "Performance & accessibility", stages: [4], focus: [0.87, 1] },
-    ],
-  },
-] as const;
-
 /** The four stages of the Capabilities scroll journey (sample concept site: "Lumen"). */
 export const capabilityStages = [
   {
@@ -116,7 +82,6 @@ export const capabilityStages = [
     label: "UX & Wireframing",
     shortLabel: "Wireframe",
     tool: "Figma — Lumen / Wireframe",
-    description: "Structure first: user flows, hierarchy and layout before any visual style.",
   },
   {
     id: "visual-design",
@@ -124,7 +89,6 @@ export const capabilityStages = [
     label: "UI Design",
     shortLabel: "UI Design",
     tool: "Figma — Lumen / UI",
-    description: "Type, then colour, imagery and spacing give that structure its identity, without moving it.",
   },
   {
     id: "frontend-build",
@@ -132,7 +96,6 @@ export const capabilityStages = [
     label: "Frontend Development",
     shortLabel: "Frontend",
     tool: "localhost:3000",
-    description: "The approved design becomes typed, reusable React components with real states.",
   },
   {
     id: "launch",
@@ -140,7 +103,6 @@ export const capabilityStages = [
     label: "Final Product",
     shortLabel: "Final",
     tool: "lumen.studio",
-    description: "One idea, carried from the first wireframe to a polished, responsive product.",
   },
 ] as const;
 
