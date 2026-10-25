@@ -133,7 +133,7 @@ export function SectionDock() {
         const x = box.left + box.width / 2;
         const y = box.top + box.height / 2;
         const backdropElement = document.elementsFromPoint(x, y).find((element) => !dock.contains(element));
-        const darkSurface = Boolean(backdropElement?.closest(".section-skills, .section-gallery__stage, .site-footer"));
+        const darkSurface = Boolean(backdropElement?.closest(".section-skills, .section-gallery__stage, .site-footer, .cap[data-tone='dark']"));
         const selectedWorkIsActive = galleryHasDarkStage && nextActive === "gallery";
         const atLightHeroTop = nextActive === "hero" && window.scrollY <= 1;
         const showHeroDockBackdrop = nextActive === "hero";

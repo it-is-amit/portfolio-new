@@ -45,7 +45,6 @@ export const copy = {
   skipToContent: "Skip to main content",
   siteFooter: "Site footer",
   journeyIntro: "I started in UI/UX design, which shapes how I build interfaces today.",
-  services: "Capabilities",
   journey: "Journey",
   scroll: "Scroll to explore",
   backToTop: "Back to top",
@@ -53,8 +52,8 @@ export const copy = {
   /** Capabilities heading, in two parts: the second renders in the accent colour. */
   servicesTitleLead: "Designing Experiences.",
   servicesTitleAccent: "Engineering Products.",
-  servicesSubtitle:
-    "UI/UX design and frontend development in one workflow: from user flows and wireframes to fast, accessible React interfaces.",
+  /** One line: kept short enough to never wrap (see .cap-head__subtitle). */
+  servicesSubtitle: "From UX design to production-ready React and Next.js.",
   contact: "Contact",
   journeyCaption: "From designer to frontend developer",
   journeyTitle: "Journey",
@@ -74,35 +73,35 @@ export const navigation = [
   { id: "contact", label: "Contact", index: "05" },
 ] as const;
 
-/** The four stages of the Capabilities scroll journey (sample concept site: "Lumen"). */
+/** The four stages of the Capabilities scroll journey (sample concept product: the "Pulse" analytics dashboard). */
 export const capabilityStages = [
   {
     id: "wireframe",
     number: "01",
     label: "UX & Wireframing",
     shortLabel: "Wireframe",
-    tool: "Figma — Lumen / Wireframe",
+    tool: "Figma — Pulse / Wireframe",
   },
   {
     id: "visual-design",
     number: "02",
     label: "UI Design",
     shortLabel: "UI Design",
-    tool: "Figma — Lumen / UI",
+    tool: "Figma — Pulse / UI",
   },
   {
     id: "frontend-build",
     number: "03",
     label: "Frontend Development",
     shortLabel: "Frontend",
-    tool: "localhost:3000",
+    tool: "localhost:3000/dashboard",
   },
   {
     id: "launch",
     number: "04",
     label: "Final Product",
     shortLabel: "Final",
-    tool: "lumen.studio",
+    tool: "pulse.app/overview",
   },
 ] as const;
 

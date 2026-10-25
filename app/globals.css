@@ -326,13 +326,17 @@
       margin-top: -100svh;
     }
 
-    /* Soft leading edge; its height matches the hero's bottom inset, so at rest it sits in the gutter. */
-    .hero-runway + .section-services::before {
+    /*
+     * The section itself is transparent: in scroll mode its sticky background layer (.cap-bg) has a
+     * long, scroll-shortened soft top edge, so nothing hard ever slides over the blurring hero. Only
+     * the static fallback (short viewports) is opaque, and gets a gentle leading fade instead.
+     */
+    .hero-runway + .section-services:has(> .cap[data-mode="static"])::before {
       position: absolute;
       bottom: 100%;
       left: 0;
       width: 100%;
-      height: var(--layout-hero-inset);
+      height: 30vh;
       background: linear-gradient(to bottom, color-mix(in srgb, var(--surface-warm) 0%, transparent), var(--surface-warm));
       content: "";
       pointer-events: none;
@@ -869,10 +873,25 @@
    * whole composition fits (e.g. phones) --cap-shift is 0 and everything pins. A scrubbed GSAP
    * timeline writes the --cap-* custom properties inline. Static mode (reduced motion or short
    * viewports): normal flow, and the same properties come from [data-stage] below.
+   *
+   * Section colour journey (scroll mode): the whole background behind the preview moves through
+   * four states — warm ivory (wireframe) → lavender wash (UI design) → deep violet (frontend) →
+   * the night gradient of the Tools & Tech section that follows, so the release is seamless.
+   *   --cap-k2 / --cap-k3 / --cap-k4 (0–1): crossfades into states 2, 3 and 4.
+   *   --cap-k3 doubles as the "dark" switch for the heading, timeline, grid and guides.
+   *   --cap-arrive (0–1): hand-off from the hero; the background's top edge is a long soft fade
+   *   that shortens to nothing as the section settles, so there is never a hard overlay edge.
    * ------------------------------------------------------------------ */
   .cap {
     --cap-shift: 0px;
     --cap-pad-top: clamp(62px, 8vh, 80px);
+    --cap-k2: 0;
+    --cap-k3: 0;
+    --cap-k4: 0;
+    --cap-ink: color-mix(in oklab, #f4f2fa calc(var(--cap-k3) * 100%), var(--midnight-ink));
+    --cap-ink-soft: color-mix(in oklab, #bdb7d1 calc(var(--cap-k3) * 100%), var(--graphite));
+    --cap-ink-muted: color-mix(in oklab, #8f8aa8 calc(var(--cap-k3) * 100%), var(--slate));
+    --cap-accent: color-mix(in oklab, var(--orchid-wash) calc(var(--cap-k3) * 100%), var(--voltage-violet));
     position: relative;
   }
 
@@ -882,7 +901,8 @@
   }
 
   .cap[data-mode="static"] {
-    padding-top: clamp(76px, 9vw, 136px);
+    padding-block: clamp(76px, 9vw, 136px) clamp(48px, 6vw, 96px);
+    background: var(--surface-warm);
   }
 
   .cap__sticky {
@@ -919,32 +939,18 @@
     justify-content: center;
   }
 
-  /* Heading block */
+  /* Heading block: title + one-line subtitle. */
   .cap-head {
     display: grid;
     max-width: 1000px;
     justify-items: center;
-    gap: clamp(8px, 1.3vh, 14px);
+    gap: clamp(10px, 1.6vh, 16px);
     text-align: center;
-  }
-
-  .cap-head__eyebrow {
-    margin: 0;
-    color: var(--ultra-violet);
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-
-  .cap-head__eyebrow span {
-    margin-inline: 6px;
-    color: var(--orchid-wash);
   }
 
   .cap-head__title {
     margin: 0;
-    color: var(--midnight-ink);
+    color: var(--cap-ink);
     font-size: clamp(2rem, min(3.7vw, 6.6vh), 4.25rem);
     font-weight: 600;
     line-height: 0.98;
@@ -957,17 +963,16 @@
   }
 
   .cap-head__accent {
-    color: var(--voltage-violet);
+    color: var(--cap-accent);
   }
 
   .cap-head__subtitle {
-    max-width: 760px;
     margin: 0;
-    color: var(--graphite);
-    font-size: clamp(0.95rem, 1.1vw, 1.08rem);
+    color: var(--cap-ink-soft);
+    font-size: min(clamp(0.95rem, 1.1vw, 1.08rem), 3.4vw);
     line-height: 1.45;
     letter-spacing: -0.02em;
-    text-wrap: balance;
+    white-space: nowrap;
   }
 
   /* Preview stage */
@@ -983,40 +988,73 @@
     position: relative;
     width: min(100%, 1100px);
     margin: 0;
+    container-type: inline-size;
   }
 
   /*
    * Scroll mode: the preview takes the height left once pinned (notch clearance, timeline, gaps,
-   * browser bar, dock), at the canvas' 16:10 ratio. ≈980px wide at 1440×900, ≈1200px at 1920×1080.
+   * browser bar, dock), at the canvas' 16:10 ratio. ≈920px wide at 1440×900, ≈1170px at 1920×1080.
    */
   .cap[data-mode="scroll"] .cap__figure {
     width: min(100%, 1240px, calc((100svh - var(--cap-pad-top) - 178px - clamp(30px, 2.6vw, 38px)) * 1.6));
   }
 
-  /* Ambient background: soft lighting, gradients and a faint grid around the preview. */
-  .cap-ambient {
+  /* Section background: the colour journey plus ambient light and a faint grid. */
+  .cap-bg {
+    --cap-bg-1: var(--surface-warm);
+    --cap-bg-2: #efe6fc;
+    --cap-bg-3: #211a39;
     position: absolute;
     z-index: 0;
-    inset: var(--cap-shift) 0 0;
+    inset: 0;
     overflow: hidden;
+    background-color: color-mix(
+      in oklab,
+      var(--cap-bg-3) calc(var(--cap-k3) * 100%),
+      color-mix(in oklab, var(--cap-bg-2) calc(var(--cap-k2) * 100%), var(--cap-bg-1))
+    );
     pointer-events: none;
   }
 
-  .cap[data-mode="static"] .cap-ambient {
+  .cap[data-mode="scroll"] .cap-bg {
+    --cap-edge: calc((1 - var(--cap-arrive, 1)) * 46vh);
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      rgb(0 0 0 / 0.3) calc(var(--cap-edge) * 0.4),
+      rgb(0 0 0 / 0.75) calc(var(--cap-edge) * 0.72),
+      #000 calc(var(--cap-edge) + 1px)
+    );
+  }
+
+  /*
+   * State 04: the Tools & Tech night gradient, mirrored vertically. That section's top edge
+   * (gradient start, centre highlight, top-right violet glow) is reproduced on this layer's bottom
+   * edge, so when the showcase releases the two surfaces meet without a seam.
+   */
+  .cap-bg__night {
+    position: absolute;
     inset: 0;
+    background:
+      radial-gradient(ellipse at 52% 100%, rgba(255, 255, 255, 0.045), transparent 72%),
+      radial-gradient(ellipse 72% 88% at 92% 96%, rgba(134, 47, 231, 0.17), transparent 66%),
+      radial-gradient(ellipse 58% 72% at 9% 22%, rgba(196, 151, 63, 0.055), transparent 68%),
+      linear-gradient(42deg, #171521 0%, #10151e 54%, #191523 100%);
+    opacity: var(--cap-k4);
   }
 
   .cap-ambient__grid {
+    --cap-grid-ink: color-mix(in srgb, var(--pure-white) calc(var(--cap-k3) * 100%), var(--midnight-ink));
     position: absolute;
     inset: -64px 0;
     background-image:
-      linear-gradient(to right, color-mix(in srgb, var(--midnight-ink) 6%, transparent) 1px, transparent 1px),
-      linear-gradient(to bottom, color-mix(in srgb, var(--midnight-ink) 6%, transparent) 1px, transparent 1px);
+      linear-gradient(to right, color-mix(in srgb, var(--cap-grid-ink) 6%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in srgb, var(--cap-grid-ink) 6%, transparent) 1px, transparent 1px);
     background-position: center top;
     background-size: 64px 64px;
     mask-image: radial-gradient(ellipse 72% 64% at 50% 58%, #000 10%, transparent 78%);
     /* Blueprint-strong while wireframing, receding to a trace as the product ships; drifts with scroll. */
-    opacity: calc(0.3 + 0.7 * clamp(0, 1 - var(--cap-p, 1) * 1.5, 1));
+    opacity: calc(0.35 + 0.65 * clamp(0, 1 - var(--cap-p, 1) * 1.5, 1));
     transform: translate3d(0, calc(var(--cap-p, 1) * -64px), 0);
   }
 
@@ -1030,22 +1068,22 @@
   }
 
   .cap-ambient__glow--violet {
-    background: radial-gradient(closest-side, color-mix(in srgb, var(--voltage-violet) 13%, transparent), transparent);
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--voltage-violet) 15%, transparent), transparent);
     opacity: calc(0.5 + 0.5 * var(--cap-p, 1));
     transform: translate3d(calc(-50% - 36vw + var(--cap-p, 1) * 20vw), calc(-50% - 14vh + var(--cap-p, 1) * 18vh), 0);
   }
 
   .cap-ambient__glow--lavender {
-    background: radial-gradient(closest-side, color-mix(in srgb, var(--lavender-mist) 17%, transparent), transparent);
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--lavender-mist) 18%, transparent), transparent);
     opacity: calc(0.35 + 0.65 * clamp(0, (var(--cap-p, 1) - 0.2) * 2, 1));
     transform: translate3d(calc(-50% + 34vw - var(--cap-p, 1) * 16vw), calc(-50% + 18vh - var(--cap-p, 1) * 22vh), 0);
   }
 
   .cap-ambient__glow--gold {
     width: 52vmax;
-    background: radial-gradient(closest-side, color-mix(in srgb, var(--champagne-gold) 14%, transparent), transparent);
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--champagne-gold) 16%, transparent), transparent);
     opacity: clamp(0, (var(--cap-p, 1) - 0.72) * 3.6, 1);
-    transform: translate3d(calc(-50% + (var(--cap-p, 1) - 0.5) * 12vw), calc(-50% + 34vh), 0);
+    transform: translate3d(calc(-50% + (var(--cap-p, 1) - 0.5) * 12vw), calc(-50% + 16vh), 0);
   }
 
   /* Design-tool guides around the canvas: present while designing, gone once it's a product. */
@@ -1071,7 +1109,7 @@
     position: absolute;
     width: 14px;
     height: 14px;
-    border-color: color-mix(in srgb, var(--voltage-violet) 50%, transparent);
+    border-color: color-mix(in srgb, var(--cap-accent) 55%, transparent);
     border-style: solid;
     border-width: 0;
   }
@@ -1085,7 +1123,7 @@
     position: absolute;
     top: -24px;
     left: 0;
-    color: color-mix(in srgb, var(--ultra-violet) 70%, transparent);
+    color: color-mix(in srgb, var(--cap-accent) 75%, transparent);
     font-family: var(--font-mono);
     font-size: 9px;
     letter-spacing: 0.1em;
@@ -1096,6 +1134,7 @@
    * mode it is scrubbed piecewise by the same timeline as the preview (each quarter = one stage, so a
    * segment starts filling exactly when its stage begins and runs backwards on reverse scroll); in
    * static mode it steps to the end of the shown stage. Segment i fills with clamp(p·4 − i).
+   * Colours follow --cap-k3, so it reads as light glass on the light states and dark glass on the dark ones.
    */
   .cap[data-mode="static"][data-stage="1"] { --cap-p: 0.25; }
   .cap[data-mode="static"][data-stage="2"] { --cap-p: 0.5; }
@@ -1117,9 +1156,9 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: clamp(8px, 1.3vw, 18px);
     padding: 12px clamp(14px, 1.6vw, 20px) 4px;
-    border: 1px solid color-mix(in srgb, var(--midnight-ink) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--cap-ink) calc(8% + var(--cap-k3) * 4%), transparent);
     border-radius: 20px;
-    background: color-mix(in srgb, var(--pure-white) 78%, transparent);
+    background: color-mix(in srgb, var(--pure-white) calc(78% - var(--cap-k3) * 72%), transparent);
     container: cap-timeline / inline-size;
   }
 
@@ -1133,7 +1172,7 @@
     border: 0;
     border-radius: 10px;
     background: transparent;
-    color: var(--slate);
+    color: var(--cap-ink-muted);
     font: inherit;
     text-align: left;
     cursor: pointer;
@@ -1146,7 +1185,7 @@
     height: 4px;
     overflow: hidden;
     border-radius: var(--shape-radius-pill);
-    background: color-mix(in srgb, var(--midnight-ink) 9%, transparent);
+    background: color-mix(in srgb, var(--cap-ink) calc(9% + var(--cap-k3) * 3%), transparent);
   }
 
   .cap-timeline__fill {
@@ -1171,7 +1210,7 @@
 
   .cap-timeline__number {
     flex: none;
-    color: var(--mist);
+    color: color-mix(in oklab, #615c7a calc(var(--cap-k3) * 100%), var(--mist));
     font-family: var(--font-mono);
     font-size: 10px;
     letter-spacing: 0.08em;
@@ -1192,7 +1231,7 @@
   .cap[data-stage="2"] .cap-timeline__step:nth-of-type(-n + 1),
   .cap[data-stage="3"] .cap-timeline__step:nth-of-type(-n + 2),
   .cap[data-stage="4"] .cap-timeline__step:nth-of-type(-n + 3) {
-    color: var(--graphite);
+    color: var(--cap-ink-soft);
   }
 
   .cap[data-stage="2"] .cap-timeline__step:nth-of-type(-n + 1) :is(.cap-timeline__fill),
@@ -1207,27 +1246,27 @@
     color: var(--lavender-mist);
   }
 
-  /* Active: full accent bar (filling with scroll), dark label, violet number. */
+  /* Active: full accent bar (filling with scroll), strong label, accent number. */
   .cap-timeline__step[aria-current="step"] {
-    color: var(--midnight-ink);
+    color: var(--cap-ink);
   }
 
   .cap-timeline__step[aria-current="step"] .cap-timeline__number {
-    color: var(--voltage-violet);
+    color: var(--cap-accent);
   }
 
   .cap-timeline__step[aria-current="step"] .cap-timeline__bar {
-    background: color-mix(in srgb, var(--voltage-violet) 16%, transparent);
+    background: color-mix(in srgb, var(--voltage-violet) calc(16% + var(--cap-k3) * 10%), transparent);
   }
 
   .cap-timeline__step:focus-visible {
-    outline: 2px solid var(--voltage-violet);
+    outline: 2px solid var(--cap-accent);
     outline-offset: 4px;
   }
 
   @media (hover: hover) {
     .cap-timeline__step:not([aria-current="step"]):hover {
-      color: var(--ultra-violet);
+      color: var(--cap-accent);
     }
   }
 
@@ -1257,63 +1296,31 @@
     }
   }
 
-  /* Scroll cue: under the timeline on arrival, fades once the build is underway. */
-  .cap-cue {
-    position: absolute;
-    top: calc(100% + 7px);
-    left: 50%;
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    margin: 0;
-    color: var(--ultra-violet);
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    opacity: var(--cap-cue, 1);
-    transform: translateX(-50%);
-    pointer-events: none;
-  }
-
-  .cap-cue svg {
-    width: 12px;
-    height: 12px;
-    animation: cap-cue-nudge 1.8s var(--ease-out) infinite;
-  }
-
-  .cap:not([data-stage="1"]) .cap-cue svg {
-    animation-play-state: paused;
-  }
-
-  @keyframes cap-cue-nudge {
-    0%, 100% { transform: translateY(-1px); }
-    50% { transform: translateY(2px); }
-  }
-
   /* Preview shell */
   /*
    * Preview variables (0–1 unless noted). Defaults describe stage 04; [data-stage] rules give the
    * static view its four frames, and in scroll mode GSAP writes them inline from scroll progress.
-   *   c = colour pass   d = refinement pass (radii, surfaces, rules, depth of components)
-   *   grid / wfa = wireframe grid and labels   uia = design annotations   dev = component tooling
-   *   nav = active nav underline   hn = demo hover on a nav link   ship = launch depth
+   *   c = colour pass   d = refinement pass (radii, shadows)   line = chart drawn in the design
+   *   grid / wfa = wireframe dot grid and labels   uia = design annotations   dev = component tooling
+   *   load = loading skeleton   live = live data layer on   n = data count-up (KPIs, bars, chart)
+   *   range = chart range switched 30D → 90D   hn = demo hover on a nav item   ship = launch depth
    *   cur / press / lift / cx / cy = scripted cursor demo (cx, cy in canvas px)
    * Individual annotations multiply their group switch by their own --cap-o (default 1), which
    * the timeline animates so each one appears on its own interval.
    */
   .cap-preview {
     --cap-c: 1;
-    --cap-s3: 1;
-    --cap-s4: 1;
     --cap-d: 1;
+    --cap-line: 1;
     --cap-grid: 0;
     --cap-wfa: 0;
     --cap-uia: 0;
     --cap-dev: 0;
+    --cap-load: 0;
+    --cap-live: 1;
+    --cap-n: 1;
+    --cap-range: 1;
     --cap-ship: 1;
-    --cap-nav: 1;
     --cap-hn: 0;
     --cap-cur: 0;
     --cap-press: 0;
@@ -1326,9 +1333,9 @@
   }
 
   /* Static view: four discrete frames. */
-  .cap[data-mode="static"][data-stage="1"] .cap-preview { --cap-c: 0; --cap-s3: 0; --cap-s4: 0; --cap-d: 0; --cap-grid: 1; --cap-wfa: 1; --cap-ship: 0; --cap-nav: 0; }
-  .cap[data-mode="static"][data-stage="2"] .cap-preview { --cap-s3: 0; --cap-s4: 0; --cap-uia: 1; --cap-ship: 0; --cap-nav: 0; }
-  .cap[data-mode="static"][data-stage="3"] .cap-preview { --cap-s4: 0; --cap-dev: 1; --cap-ship: 0; }
+  .cap[data-mode="static"][data-stage="1"] .cap-preview { --cap-c: 0; --cap-d: 0; --cap-line: 0; --cap-grid: 1; --cap-wfa: 1; --cap-live: 0; --cap-range: 0; --cap-ship: 0; }
+  .cap[data-mode="static"][data-stage="2"] .cap-preview { --cap-uia: 1; --cap-live: 0; --cap-range: 0; --cap-ship: 0; }
+  .cap[data-mode="static"][data-stage="3"] .cap-preview { --cap-dev: 1; --cap-ship: 0; }
 
   /*
    * Scroll view: CSS holds the journey's *starting* frame. The scrubbed timeline only ever writes
@@ -1337,39 +1344,40 @@
    */
   .cap[data-mode="scroll"] {
     --cap-p: 0;
-    --cap-cue: 1;
+    --cap-arrive: 0;
   }
 
   .cap[data-mode="scroll"] .cap-preview {
     --cap-c: 0;
-    --cap-s3: 0;
-    --cap-s4: 0;
     --cap-d: 0;
+    --cap-line: 0;
     --cap-grid: 1;
     --cap-wfa: 1;
     --cap-uia: 1;
     --cap-dev: 1;
+    --cap-live: 0;
+    --cap-n: 0;
+    --cap-range: 0;
     --cap-ship: 0;
-    --cap-nav: 0;
   }
 
   .cap[data-mode="scroll"] .cap-slot { --cap-t: 0; }
   .cap[data-mode="scroll"] [data-cap-build] { --cap-b: 0; }
   .cap[data-mode="scroll"] [data-cap-fx] { --cap-o: 0; }
-  .cap[data-mode="scroll"] :is([data-cap-fx="label"], [data-cap-fx="frame"]) { --cap-o: 1; }
+  .cap[data-mode="scroll"] [data-cap-fx="label"] { --cap-o: 1; }
 
   .cap[data-mode="static"] .cap-preview {
     transition:
       --cap-c 600ms var(--ease-out),
-      --cap-s3 600ms var(--ease-out),
-      --cap-s4 700ms var(--ease-out),
       --cap-d 700ms var(--ease-out) 120ms,
+      --cap-line 900ms var(--ease-out) 200ms,
       --cap-grid 500ms var(--ease-out),
       --cap-wfa 400ms var(--ease-out),
       --cap-uia 400ms var(--ease-out),
       --cap-dev 400ms var(--ease-out),
-      --cap-ship 700ms var(--ease-out),
-      --cap-nav 500ms var(--ease-out);
+      --cap-live 300ms var(--ease-out),
+      --cap-range 700ms var(--ease-out),
+      --cap-ship 700ms var(--ease-out);
   }
 
   /* Launch depth: a soft violet-tinted lift that only exists in stage 04. */
@@ -1379,8 +1387,8 @@
     inset: 8% 5% 0;
     border-radius: 28px;
     box-shadow:
-      0 44px 80px -24px rgba(55, 22, 99, 0.34),
-      0 18px 40px -20px rgba(17, 24, 39, 0.32);
+      0 44px 90px -24px rgba(8, 4, 20, 0.6),
+      0 18px 40px -20px rgba(55, 22, 99, 0.45);
     content: "";
     opacity: var(--cap-ship);
   }
@@ -1388,7 +1396,7 @@
   .cap-browser {
     position: relative;
     overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--midnight-ink) 11%, transparent);
+    border: 1px solid color-mix(in srgb, var(--cap-ink) calc(11% + var(--cap-k3) * 4%), transparent);
     border-radius: clamp(14px, 1.5vw, 20px);
     background: var(--pure-white);
     box-shadow:
@@ -1485,67 +1493,43 @@
     container-type: inline-size;
   }
 
-  /* The sample site: a 960 × 600 canvas where 1 design px = var(--u). */
-  .cap-site {
+  /*
+   * The sample app ("Pulse", a concept analytics dashboard): a 960 × 600 canvas where 1 design
+   * px = var(--u). Sidebar 188 wide; content column x 212–936 (topbar, KPI row, chart + sources,
+   * orders table). --ui-* tokens are grey in the wireframe and take the brand colour with --cap-c.
+   */
+  .cap-app {
     --u: calc(100cqw / 960);
+    --ui-accent: color-mix(in srgb, var(--voltage-violet) calc(var(--cap-c) * 100%), #a3abb8);
+    --ui-accent-soft: color-mix(in srgb, var(--lavender-field) calc(var(--cap-c) * 70%), #f1f3f6);
+    --ui-positive: color-mix(in srgb, #15805a calc(var(--cap-c) * 100%), var(--slate));
+    --ui-negative: color-mix(in srgb, #c0247f calc(var(--cap-c) * 100%), var(--slate));
+    --ui-line: color-mix(in srgb, var(--midnight-ink) 8%, transparent);
     position: absolute;
     inset: 0;
     overflow: hidden;
-    /*
-     * Four background states, each crossfaded by scroll: white wireframe paper → warm ivory (UI
-     * design, --cap-c) → cool periwinkle (frontend build, --cap-s3) → lavender launch palette with
-     * violet and champagne light (--cap-s4, see ::before).
-     */
-    --cap-bg-design: #f8f4ec;
-    --cap-bg-build: #eff2fb;
-    --cap-bg-launch: #f5eefe;
-    background: color-mix(
-      in oklab,
-      var(--cap-bg-launch) calc(var(--cap-s4) * 100%),
-      color-mix(
-        in oklab,
-        var(--cap-bg-build) calc(var(--cap-s3) * 100%),
-        color-mix(in oklab, var(--cap-bg-design) calc(var(--cap-c) * 100%), var(--pure-white))
-      )
-    );
+    background: color-mix(in srgb, #f5f6fa calc(var(--cap-c) * 100%), var(--pure-white));
     color: var(--midnight-ink);
     font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
     line-height: 1.2;
     cursor: default;
   }
 
-  /* Launch light: violet and champagne glows that only exist in the final state. */
-  .cap-site::before {
+  /* Wireframe dot grid. */
+  .cap-app::before {
     position: absolute;
     inset: 0;
-    background:
-      radial-gradient(58% 72% at 88% 6%, color-mix(in srgb, var(--lavender-mist) 26%, transparent), transparent 70%),
-      radial-gradient(46% 60% at 6% 104%, color-mix(in srgb, var(--champagne-gold) 18%, transparent), transparent 70%);
+    background-image: radial-gradient(circle, #d3d9e1 calc(var(--u) * 1), transparent calc(var(--u) * 1.3));
+    background-size: calc(var(--u) * 16) calc(var(--u) * 16);
     content: "";
-    opacity: var(--cap-s4);
-    pointer-events: none;
-  }
-
-  .cap[data-stage="1"] .cap-site,
-  .cap[data-stage="2"] .cap-site {
-    pointer-events: none;
-  }
-
-  .cap-grid {
-    --cap-r: 1;
-    position: absolute;
-    inset: 0 calc(var(--u) * 40);
-    display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: calc(var(--u) * 16);
     opacity: var(--cap-grid);
     pointer-events: none;
   }
 
-  .cap-grid i {
-    background: color-mix(in srgb, var(--hot-pink-ray) 5%, transparent);
-    transform: scaleY(var(--cap-r));
-    transform-origin: top;
+  .cap[data-stage="1"] .cap-app,
+  .cap[data-stage="2"] .cap-app {
+    pointer-events: none;
   }
 
   .cap-region {
@@ -1560,16 +1544,6 @@
     --cap-b: 1;
     opacity: var(--cap-b);
     translate: 0 calc((1 - var(--cap-b)) * var(--u) * 8);
-  }
-
-  /* Wireframe region frame: becomes the <Hero /> component outline later in the journey. */
-  .cap-wf-frame {
-    position: absolute;
-    inset: calc(var(--u) * -5) calc(var(--u) * -10);
-    border: 1px dashed #d3d9e1;
-    border-radius: calc(var(--u) * 6);
-    opacity: calc(var(--cap-wfa) * var(--cap-o, 1));
-    pointer-events: none;
   }
 
   /* Slot: wireframe skin and designed skin share one grid cell and are wiped by --cap-t. */
@@ -1588,8 +1562,8 @@
     transition: --cap-t 760ms var(--ease-out);
   }
 
-  .cap[data-mode="static"] .cap-hero .cap-slot { transition-delay: 70ms; }
-  .cap[data-mode="static"] .cap-projects .cap-slot { transition-delay: 140ms; }
+  .cap[data-mode="static"] :is(.cap-kpis, .cap-chart-card, .cap-sources) .cap-slot { transition-delay: 70ms; }
+  .cap[data-mode="static"] .cap-table .cap-slot { transition-delay: 140ms; }
 
   .cap-slot > .cap-slot__wf,
   .cap-slot > .cap-slot__hi {
@@ -1633,53 +1607,80 @@
     gap: calc(var(--u) * 8);
   }
 
-  .cap-wf-row--links { gap: calc(var(--u) * 24); }
-  .cap-wf-row--actions { gap: calc(var(--u) * 10); }
-  .cap-wf-row--chips { gap: calc(var(--u) * 6); }
+  .cap-wf-row--tight { gap: calc(var(--u) * 4); }
+
+  .cap-wf-row--between {
+    width: 100%;
+    justify-content: space-between;
+  }
 
   .cap-wf-dot {
-    width: calc(var(--u) * 18);
-    height: calc(var(--u) * 18);
+    width: calc(var(--u) * 20);
+    height: calc(var(--u) * 20);
+    flex: none;
     border-radius: 50%;
+    background: #d5dae2;
+  }
+
+  .cap-wf-square {
+    width: calc(var(--u) * 14);
+    height: calc(var(--u) * 14);
+    flex: none;
+    border-radius: calc(var(--u) * 3);
     background: #d5dae2;
   }
 
   .cap-wf-stack {
     display: grid;
-    gap: calc(var(--u) * 11);
-    padding-block: calc(var(--u) * 3);
+    gap: calc(var(--u) * 8);
   }
 
-  .cap-wf-stack--title {
-    gap: calc(var(--u) * 9);
-    padding-block: calc(var(--u) * 4);
+  .cap-wf-list {
+    display: grid;
+    gap: calc(var(--u) * 18);
+    padding: calc(var(--u) * 9) calc(var(--u) * 10);
   }
 
-  .cap-wf-button {
-    display: inline-flex;
-    height: calc(var(--u) * 34);
-    align-items: center;
-    justify-content: center;
-    padding-inline: calc(var(--u) * 22);
+  .cap-wf-list--sources {
+    gap: calc(var(--u) * 17);
+    padding: calc(var(--u) * 2) 0 0;
+  }
+
+  .cap-wf-card {
+    display: grid;
+    gap: calc(var(--u) * 8);
+    padding: calc(var(--u) * 12);
+    border: 1px dashed #c9d0da;
+    border-radius: calc(var(--u) * 6);
+  }
+
+  .cap-wf-pill {
+    display: block;
+    width: calc(var(--u) * 170);
+    height: calc(var(--u) * 28);
     border: 1px dashed #b9c1cc;
-    border-radius: calc(var(--u) * 3);
+    border-radius: calc(var(--u) * 6);
   }
 
-  .cap-wf-button--sm {
-    height: calc(var(--u) * 30);
-    padding-inline: calc(var(--u) * 16);
-  }
-
-  .cap-wf-button--ghost .cap-wf-bar {
-    background: #edf0f4;
+  .cap-wf-pill--sm {
+    width: calc(var(--u) * 42);
+    height: calc(var(--u) * 15);
+    border-radius: calc(var(--u) * 8);
   }
 
   .cap-wf-chip {
     display: block;
-    width: calc(var(--w) * var(--u));
-    height: calc(var(--u) * 24);
+    width: calc(var(--u) * 28);
+    height: calc(var(--u) * 20);
     border: 1px solid #d5dae2;
-    border-radius: calc(var(--u) * 12);
+    border-radius: calc(var(--u) * 5);
+  }
+
+  .cap-wf-spark {
+    display: block;
+    width: calc(var(--u) * 56);
+    height: calc(var(--u) * 20);
+    background: linear-gradient(to top right, transparent calc(50% - 1px), #cfd5de calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px));
   }
 
   .cap-wf-box {
@@ -1689,7 +1690,7 @@
     height: 100%;
     place-items: center;
     border: 1px solid #cfd5de;
-    border-radius: calc(var(--u) * 3);
+    border-radius: calc(var(--u) * 4);
     background:
       linear-gradient(to top right, transparent calc(50% - 0.5px), #d5dae2 calc(50% - 0.5px), #d5dae2 calc(50% + 0.5px), transparent calc(50% + 0.5px)),
       linear-gradient(to bottom right, transparent calc(50% - 0.5px), #d5dae2 calc(50% - 0.5px), #d5dae2 calc(50% + 0.5px), transparent calc(50% + 0.5px)),
@@ -1724,278 +1725,391 @@
     pointer-events: none;
   }
 
-  .cap-wf-label--hero {
-    top: calc(var(--u) * -14);
-    left: 0;
+  .cap-wf-label--side { top: calc(var(--u) * 300); left: calc(var(--u) * 24); }
+  .cap-wf-label--kpi { top: calc(var(--u) * -9); right: calc(var(--u) * 10); }
+  .cap-wf-label--chart { top: calc(var(--u) * -9); left: calc(var(--u) * 16); }
+  .cap-wf-label--table { top: calc(var(--u) * -9); right: calc(var(--u) * 16); }
+
+  /* Shared card surface: the refinement pass (--cap-d) rounds corners and adds depth. */
+  .cap-kpi,
+  .cap-chart-card,
+  .cap-sources,
+  .cap-table {
+    border: 1px solid color-mix(in srgb, var(--midnight-ink) calc(7% + (1 - var(--cap-d)) * 4%), transparent);
+    border-radius: calc(var(--u) * (4 + 6 * var(--cap-d)));
+    background: var(--pure-white);
+    box-shadow:
+      0 calc(var(--u) * 1) calc(var(--u) * 2) rgb(17 24 39 / calc(0.04 * var(--cap-d))),
+      0 calc(var(--u) * 10) calc(var(--u) * 24) rgb(17 24 39 / calc(0.05 * var(--cap-d)));
   }
 
-  .cap-wf-label--projects {
-    top: calc(var(--u) * 3);
-    right: calc(var(--u) * 40);
-  }
-
-  /* Navigation */
-  .cap-nav {
-    top: 0;
-    left: calc(var(--u) * 40);
+  .cap-card-head {
     display: flex;
-    width: calc(var(--u) * 880);
-    height: calc(var(--u) * 60);
     align-items: center;
-    gap: calc(var(--u) * 28);
+    justify-content: space-between;
+    gap: calc(var(--u) * 12);
   }
 
-  .cap-nav__links {
-    margin-left: auto;
+  .cap-card-title {
+    display: flex;
+    align-items: baseline;
+    gap: calc(var(--u) * 8);
+    font-size: calc(var(--u) * 12.5);
+    font-weight: 650;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
   }
 
-  .cap-nav__rule {
-    position: absolute;
-    right: calc(var(--u) * -40);
-    bottom: 0;
-    left: calc(var(--u) * -40);
-    height: 1px;
+  .cap-card-title em {
+    color: var(--ui-positive);
+    font-size: calc(var(--u) * 9.5);
+    font-style: normal;
+    font-weight: 600;
+    letter-spacing: 0;
   }
 
-  .cap-nav__rule::before,
-  .cap-nav__rule::after {
-    position: absolute;
-    inset: 0;
-    content: "";
+  .cap-link {
+    color: var(--ui-accent);
+    font-size: calc(var(--u) * 10);
+    font-weight: 650;
   }
 
-  .cap-nav__rule::before {
-    background: repeating-linear-gradient(90deg, #cfd5de 0 calc(var(--u) * 6), transparent calc(var(--u) * 6) calc(var(--u) * 11));
-    opacity: calc(1 - var(--cap-d));
+  /* Sidebar */
+  .cap-side {
+    top: 0;
+    left: 0;
+    display: flex;
+    width: calc(var(--u) * 188);
+    height: 100%;
+    flex-direction: column;
+    gap: calc(var(--u) * 24);
+    padding: calc(var(--u) * 20) calc(var(--u) * 14) calc(var(--u) * 16);
+    border-right: 1px solid var(--ui-line);
+    background: var(--pure-white);
   }
 
-  .cap-nav__rule::after {
-    background: color-mix(in srgb, var(--midnight-ink) 8%, transparent);
-    opacity: var(--cap-d);
+  .cap-side__plan {
+    margin-top: auto;
   }
 
   .cap-logo {
     display: inline-flex;
     align-items: center;
-    gap: calc(var(--u) * 7);
+    gap: calc(var(--u) * 8);
+    padding-left: calc(var(--u) * 6);
     color: var(--midnight-ink);
-    font-size: calc(var(--u) * 17);
+    font-size: calc(var(--u) * 15);
     font-weight: 700;
-    letter-spacing: -0.045em;
+    letter-spacing: -0.04em;
     white-space: nowrap;
   }
 
   .cap-logo__mark {
     display: block;
-    width: calc(var(--u) * 16);
-    height: calc(var(--u) * 16);
-    border-radius: calc(var(--u) * 5);
+    width: calc(var(--u) * 20);
+    height: calc(var(--u) * 20);
+    flex: none;
+    border-radius: calc(var(--u) * 6);
     background:
-      radial-gradient(circle at 68% 32%, color-mix(in srgb, var(--lavender-field) calc(var(--cap-c) * 100%), var(--pure-white)) 0 22%, transparent 24%),
-      color-mix(in srgb, var(--voltage-violet) calc(var(--cap-c) * 100%), #9aa3b2);
+      radial-gradient(circle at 70% 30%, rgb(255 255 255 / 0.75) 0 18%, transparent 21%),
+      linear-gradient(135deg, var(--ui-accent), color-mix(in srgb, var(--hot-pink-ray) calc(var(--cap-c) * 100%), #c3c9d3));
   }
 
-  .cap-nav__list {
+  .cap-nav {
+    display: grid;
+    gap: calc(var(--u) * 3);
+  }
+
+  .cap-nav__item {
+    display: flex;
+    height: calc(var(--u) * 32);
+    align-items: center;
+    gap: calc(var(--u) * 10);
+    padding: 0 calc(var(--u) * 10);
+    border-radius: calc(var(--u) * 8);
+    color: var(--graphite);
+    font-size: calc(var(--u) * 11.5);
+    font-weight: 550;
+    white-space: nowrap;
+  }
+
+  .cap-nav__item svg {
+    width: calc(var(--u) * 14);
+    height: calc(var(--u) * 14);
+    flex: none;
+    color: var(--slate);
+  }
+
+  .cap-nav__item.is-active {
+    background: var(--ui-accent-soft);
+    color: color-mix(in srgb, var(--ultra-violet) calc(var(--cap-c) * 100%), var(--midnight-ink));
+    font-weight: 650;
+  }
+
+  .cap-nav__item.is-active svg {
+    color: var(--ui-accent);
+  }
+
+  /* Scripted hover (stage 03 cursor demo) on the second item. */
+  .cap-nav__item:nth-child(2) {
+    background: color-mix(in srgb, var(--fog) calc(var(--cap-hn) * 100%), transparent);
+    color: color-mix(in oklab, var(--midnight-ink) calc(var(--cap-hn) * 100%), var(--graphite));
+  }
+
+  .cap-plan {
+    display: grid;
+    gap: calc(var(--u) * 5);
+    padding: calc(var(--u) * 12);
+    border-radius: calc(var(--u) * 10);
+    background: color-mix(in srgb, var(--fog) 80%, var(--pure-white));
+    font-size: calc(var(--u) * 9.5);
+  }
+
+  .cap-plan strong {
+    font-size: calc(var(--u) * 11);
+    font-weight: 650;
+  }
+
+  .cap-plan span {
+    color: var(--slate);
+  }
+
+  .cap-plan i {
+    display: block;
+    height: calc(var(--u) * 4);
+    margin-top: calc(var(--u) * 4);
+    overflow: hidden;
+    border-radius: var(--shape-radius-pill);
+    background: color-mix(in srgb, var(--midnight-ink) 8%, transparent);
+  }
+
+  .cap-plan b {
+    display: block;
+    width: 60%;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--ui-accent);
+  }
+
+  /* Top bar */
+  .cap-top {
+    top: 0;
+    right: 0;
+    left: calc(var(--u) * 188);
+    display: flex;
+    height: calc(var(--u) * 64);
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 calc(var(--u) * 24);
+    border-bottom: 1px solid var(--ui-line);
+    background: color-mix(in srgb, var(--pure-white) 72%, transparent);
+  }
+
+  .cap-top__heading {
+    display: grid;
+    gap: calc(var(--u) * 3);
+    white-space: nowrap;
+  }
+
+  .cap-top__heading strong {
+    font-size: calc(var(--u) * 17);
+    font-weight: 650;
+    letter-spacing: -0.03em;
+  }
+
+  .cap-top__heading span {
+    color: var(--slate);
+    font-size: calc(var(--u) * 9.5);
+  }
+
+  .cap-top__tools {
     display: flex;
     align-items: center;
-    gap: calc(var(--u) * 24);
+    gap: calc(var(--u) * 10);
   }
 
-  .cap-navlink {
-    position: relative;
-    padding-block: calc(var(--u) * 4);
-    color: var(--graphite);
-    font-size: calc(var(--u) * 12);
-    font-weight: 550;
-    letter-spacing: -0.01em;
-    white-space: nowrap;
-  }
-
-  .cap-navlink::after {
-    position: absolute;
-    right: 0;
-    bottom: calc(var(--u) * -1);
-    left: 0;
-    height: max(1px, calc(var(--u) * 1.6));
-    border-radius: 1px;
-    background: var(--voltage-violet);
-    content: "";
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 260ms var(--ease-out);
-  }
-
-  .cap-navlink--active {
-    color: var(--midnight-ink);
-  }
-
-  /* Stage 03 demo: the scripted cursor hovers "Studio" (driven by --cap-hn). */
-  .cap-navlink:nth-child(2) {
-    color: color-mix(in srgb, var(--midnight-ink) calc(var(--cap-hn) * 100%), var(--graphite));
-  }
-
-  .cap-navlink:nth-child(2)::after {
-    transform: scaleX(var(--cap-hn));
-  }
-
-  .cap[data-mode="scroll"] .cap-navlink:nth-child(2)::after {
-    transition: none;
-  }
-
-  .cap-navlink--active::after {
-    transform: scaleX(var(--cap-nav));
-    transition: none;
-  }
-
-  /* Buttons */
-  .cap-button {
+  .cap-search {
     display: inline-flex;
-    height: calc(var(--u) * 34);
+    width: calc(var(--u) * 190);
+    height: calc(var(--u) * 30);
     align-items: center;
-    justify-content: center;
-    gap: calc(var(--u) * 6);
-    padding-inline: calc(var(--u) * 18);
-    border: 1px solid transparent;
-    border-radius: var(--shape-radius-pill);
-    font-size: calc(var(--u) * 12);
-    font-weight: 650;
-    letter-spacing: -0.015em;
-    white-space: nowrap;
+    gap: calc(var(--u) * 7);
+    padding: 0 calc(var(--u) * 6) 0 calc(var(--u) * 10);
+    border: 1px solid var(--ui-line);
+    border-radius: calc(var(--u) * 8);
+    background: color-mix(in srgb, var(--fog) 70%, var(--pure-white));
+    color: var(--slate);
+    font-size: calc(var(--u) * 10);
   }
 
-  /* Hover transitions only once the design is "built"; while scrubbing they would lag the scroll. */
-  .cap:is([data-stage="3"], [data-stage="4"]) :is(.cap-button, .cap-chip) {
-    transition:
-      background-color 220ms var(--ease-out),
-      border-color 220ms var(--ease-out),
-      color 220ms var(--ease-out);
+  .cap-search svg {
+    width: calc(var(--u) * 12);
+    height: calc(var(--u) * 12);
   }
 
-  .cap-button svg {
+  .cap-search kbd {
+    margin-left: auto;
+    padding: calc(var(--u) * 1) calc(var(--u) * 5);
+    border: 1px solid var(--ui-line);
+    border-radius: calc(var(--u) * 4);
+    background: var(--pure-white);
+    font-family: var(--font-mono);
+    font-size: calc(var(--u) * 8.5);
+  }
+
+  .cap-icon-button {
+    position: relative;
+    display: grid;
+    width: calc(var(--u) * 30);
+    height: calc(var(--u) * 30);
+    place-items: center;
+    border: 1px solid var(--ui-line);
+    border-radius: calc(var(--u) * 8);
+    color: var(--graphite);
+  }
+
+  .cap-icon-button svg {
     width: calc(var(--u) * 13);
     height: calc(var(--u) * 13);
-    transform: translateX(calc(var(--cap-press) * var(--u) * 3));
   }
 
-  .cap-button--sm {
-    height: calc(var(--u) * 30);
-    padding-inline: calc(var(--u) * 15);
-    font-size: calc(var(--u) * 11.5);
+  .cap-icon-button i {
+    position: absolute;
+    top: calc(var(--u) * 7);
+    right: calc(var(--u) * 8);
+    width: calc(var(--u) * 5);
+    height: calc(var(--u) * 5);
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--hot-pink-ray) calc(var(--cap-c) * 100%), #a3abb8);
   }
 
-  .cap-button--dark {
-    background: color-mix(in srgb, var(--midnight-ink) calc(35% + 65% * var(--cap-c)), var(--pure-white));
-    color: var(--pure-white);
-  }
-
-  .cap-button--primary {
-    background: color-mix(
-      in srgb,
-      color-mix(in srgb, var(--ultra-violet) calc(var(--cap-press) * 100%), var(--voltage-violet)) calc(var(--cap-c) * 100%),
-      #8f98a8
-    );
-    box-shadow: 0 calc(var(--u) * 6) calc(var(--u) * 16) color-mix(in srgb, var(--voltage-violet) calc(var(--cap-d) * 26%), transparent);
-    color: var(--pure-white);
-    transform: scale(calc(1 - var(--cap-press) * 0.04));
-  }
-
-  .cap-button--ghost {
-    border-color: color-mix(in srgb, var(--midnight-ink) 22%, transparent);
-    color: var(--midnight-ink);
-  }
-
-  /* Hero */
-  .cap-hero {
-    top: calc(var(--u) * 76);
-    left: calc(var(--u) * 40);
+  .cap-avatar {
     display: grid;
-    width: calc(var(--u) * 880);
-    height: calc(var(--u) * 266);
-    grid-template-columns: calc(var(--u) * 428) calc(var(--u) * 420);
-    column-gap: calc(var(--u) * 32);
+    width: calc(var(--u) * 30);
+    height: calc(var(--u) * 30);
+    place-items: center;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--ui-accent), color-mix(in srgb, var(--ultra-violet) calc(var(--cap-c) * 100%), #8a93a3));
+    color: var(--pure-white);
+    font-size: calc(var(--u) * 10);
+    font-weight: 700;
   }
 
-  .cap-hero__copy {
+  /* KPI cards */
+  .cap-kpis {
+    top: calc(var(--u) * 84);
+    left: calc(var(--u) * 212);
+    display: grid;
+    width: calc(var(--u) * 724);
+    height: calc(var(--u) * 92);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: calc(var(--u) * 14);
+  }
+
+  .cap-kpi {
     position: relative;
     display: flex;
     min-width: 0;
     flex-direction: column;
-    align-items: flex-start;
-    padding-top: calc(var(--u) * 22);
+    justify-content: space-between;
+    padding: calc(var(--u) * 13) calc(var(--u) * 14) calc(var(--u) * 12);
   }
 
-  .cap-hero__eyebrow {
-    height: calc(var(--u) * 12);
-    align-content: center;
+  .cap-kpi__meta {
+    width: 100%;
   }
 
-  .cap-hero__title { margin-top: calc(var(--u) * 12); }
-  .cap-hero__text { margin-top: calc(var(--u) * 14); }
-  .cap-hero__actions { margin-top: calc(var(--u) * 20); }
-
-  .cap-hero__media {
-    height: 100%;
+  .cap-kpi__body {
+    display: grid;
+    gap: calc(var(--u) * 6);
   }
 
-  .cap-eyebrow {
-    color: color-mix(in srgb, var(--voltage-violet) calc(var(--cap-c) * 100%), var(--slate));
-    font-family: var(--font-mono);
-    font-size: calc(var(--u) * 9.5);
-    font-weight: 500;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    white-space: nowrap;
+  .cap-kpi__label {
+    color: var(--slate);
+    font-size: calc(var(--u) * 10);
+    font-weight: 550;
   }
 
-  .cap-h1 {
-    margin: 0;
-    color: var(--midnight-ink);
-    font-size: calc(var(--u) * 46);
-    font-weight: 650;
-    line-height: 0.92;
-    letter-spacing: -0.065em;
-    white-space: nowrap;
-  }
-
-  .cap-h1 span {
-    color: color-mix(in srgb, var(--ultra-violet) calc(var(--cap-c) * 100%), var(--midnight-ink));
-  }
-
-  .cap-body {
-    width: calc(var(--u) * 340);
-    margin: 0;
-    color: var(--graphite);
-    font-size: calc(var(--u) * 13);
-    line-height: 1.5;
-    letter-spacing: -0.01em;
-  }
-
-  .cap-hero__buttons {
-    display: flex;
-    gap: calc(var(--u) * 10);
-  }
-
-  .cap-media {
+  .cap-kpi__value {
     position: relative;
     display: block;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    border-radius: calc(var(--u) * (3 + 11 * var(--cap-d)));
-    background: var(--lavender-field);
+    height: calc(var(--u) * 26);
+    font-size: calc(var(--u) * 23);
+    font-weight: 650;
+    line-height: 1.1;
+    letter-spacing: -0.04em;
+    white-space: nowrap;
   }
 
-  .cap-media img {
-    object-fit: cover;
-    filter: saturate(calc(0.35 + 0.65 * var(--cap-c)));
-    transform: scale(calc(1.08 - 0.08 * var(--cap-t)));
+  .cap-kpi__static {
+    opacity: calc((1 - var(--cap-live)) * (1 - var(--cap-load)));
   }
 
-  .cap-media--card {
-    border-radius: calc(var(--u) * (2 + 7 * var(--cap-d)));
+  /*
+   * Live values: typed <integer> properties (see @property --cap-ca/--cap-cb) round the scrubbed
+   * product a × n, and CSS counters print it — numbers count with scroll, no JS per frame.
+   */
+  .cap-count {
+    --cap-ca: calc(var(--a) * var(--cap-n));
+    --cap-cb: calc(var(--b) * var(--cap-n));
+    position: absolute;
+    inset: 0;
+    counter-reset: cap-a var(--cap-ca) cap-b var(--cap-cb);
+    opacity: var(--cap-live);
   }
 
-  /* Design-tool annotations (stage 02) */
+  .cap-count--revenue::before { content: "$" counter(cap-a) "." counter(cap-b) "k"; }
+  .cap-count--users::before { content: counter(cap-a) "." counter(cap-b) "k"; }
+  .cap-count--conversion::before { content: counter(cap-a) "." counter(cap-b) "%"; }
+  .cap-count--order::before { content: "$" counter(cap-a); }
+
+  .cap-skel {
+    position: absolute;
+    inset: 12% 36% 12% 0;
+    border-radius: calc(var(--u) * 4);
+    background: linear-gradient(90deg, #eceff4, #f6f7fa 50%, #eceff4);
+    opacity: var(--cap-load);
+    pointer-events: none;
+  }
+
+  .cap-kpi__foot {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  .cap-delta {
+    padding: calc(var(--u) * 2) calc(var(--u) * 6);
+    border-radius: var(--shape-radius-pill);
+    background: color-mix(in srgb, var(--ui-positive) 11%, transparent);
+    color: var(--ui-positive);
+    font-size: calc(var(--u) * 9);
+    font-weight: 650;
+  }
+
+  .cap-delta--down {
+    background: color-mix(in srgb, var(--ui-negative) 10%, transparent);
+    color: var(--ui-negative);
+  }
+
+  .cap-spark {
+    width: calc(var(--u) * 60);
+    height: calc(var(--u) * 22);
+    overflow: visible;
+  }
+
+  .cap-spark path {
+    fill: none;
+    stroke: var(--ui-accent);
+    stroke-linecap: round;
+    stroke-width: 1.7;
+  }
+
+  .cap-delta--down + .cap-spark path {
+    stroke: var(--ui-negative);
+  }
+
+  /* Design annotations (stage 02) */
   .cap-select {
     position: absolute;
     z-index: 3;
@@ -2021,8 +2135,8 @@
 
   .cap-select__badge {
     position: absolute;
+    bottom: calc(100% + var(--u) * 7);
     right: calc(var(--u) * -1);
-    bottom: calc(100% + var(--u) * 6);
     padding: calc(var(--u) * 2) calc(var(--u) * 5);
     border-radius: calc(var(--u) * 2);
     background: var(--voltage-violet);
@@ -2035,7 +2149,7 @@
   .cap-component-tag {
     position: absolute;
     z-index: 3;
-    top: calc(var(--u) * -14);
+    top: calc(var(--u) * -17);
     left: 0;
     display: inline-flex;
     align-items: center;
@@ -2061,7 +2175,7 @@
     position: absolute;
     z-index: 4;
     border: 1px dashed color-mix(in srgb, var(--voltage-violet) 72%, transparent);
-    border-radius: calc(var(--u) * 6);
+    border-radius: calc(var(--u) * 8);
     background: color-mix(in srgb, var(--voltage-violet) 3%, transparent);
     opacity: calc(var(--cap-dev) * var(--cap-o, 1));
     pointer-events: none;
@@ -2081,209 +2195,320 @@
     transform: translateY(-50%);
   }
 
-  .cap-dev-outline--nav { inset: calc(var(--u) * 7) calc(var(--u) * -10); }
+  .cap-dev-outline--side { inset: calc(var(--u) * 6); }
 
-  .cap-dev-outline--nav .cap-dev-outline__label {
+  .cap-dev-outline--side .cap-dev-outline__label {
     top: auto;
-    right: calc(var(--u) * 10);
     bottom: 0;
-    left: auto;
     transform: translateY(50%);
   }
 
-  .cap-dev-outline--hero { inset: calc(var(--u) * -5) calc(var(--u) * -10); }
-  .cap-dev-outline--projects { inset: calc(var(--u) * 13) calc(var(--u) * 30) calc(var(--u) * 10); }
+  .cap-dev-outline--kpi { inset: calc(var(--u) * -6); }
+  .cap-dev-outline--chart,
+  .cap-dev-outline--table { inset: calc(var(--u) * -5); }
+  .cap-dev-outline--table .cap-dev-outline__label { right: calc(var(--u) * 10); left: auto; }
 
-  /* Projects */
-  .cap-projects {
-    top: calc(var(--u) * 362);
-    left: 0;
-    width: calc(var(--u) * 960);
-    height: calc(var(--u) * 238);
-    padding: calc(var(--u) * 20) calc(var(--u) * 40);
-  }
-
-  .cap-projects__band {
-    position: absolute;
-    z-index: -1;
-    inset: 0;
-    border-top: 1px dashed color-mix(in srgb, #c3cad5 calc((1 - var(--cap-d)) * 100%), transparent);
-    /* Lavender band while designing; frosted white once the page itself turns lavender. */
-    background: color-mix(
-      in srgb,
-      rgb(255 255 255 / 0.58) calc(var(--cap-s3) * 100%),
-      color-mix(in srgb, #f4effc calc(var(--cap-c) * 100%), transparent)
-    );
-  }
-
-  .cap-projects__head {
+  /* Revenue chart */
+  .cap-chart-card {
+    top: calc(var(--u) * 192);
+    left: calc(var(--u) * 212);
     display: flex;
-    height: calc(var(--u) * 28);
-    align-items: center;
-    justify-content: space-between;
+    width: calc(var(--u) * 470);
+    height: calc(var(--u) * 220);
+    flex-direction: column;
+    gap: calc(var(--u) * 12);
+    padding: calc(var(--u) * 16);
   }
 
-  .cap-h2 {
-    margin: 0;
-    font-size: calc(var(--u) * 20);
-    font-weight: 650;
-    letter-spacing: -0.05em;
-    white-space: nowrap;
-  }
-
-  .cap-h2 span {
-    margin-left: calc(var(--u) * 4);
+  .cap-segment {
+    display: inline-flex;
+    gap: calc(var(--u) * 2);
+    padding: calc(var(--u) * 2);
+    border-radius: calc(var(--u) * 7);
+    background: var(--fog);
     color: var(--slate);
-    font-family: var(--font-mono);
-    font-size: calc(var(--u) * 9);
-    font-weight: 500;
-    letter-spacing: 0.06em;
+    font-size: calc(var(--u) * 9.5);
+    font-weight: 650;
   }
 
-  .cap-filters {
-    display: flex;
+  .cap-segment span {
+    display: grid;
+    min-width: calc(var(--u) * 30);
+    height: calc(var(--u) * 20);
+    place-items: center;
+    border-radius: calc(var(--u) * 5);
+  }
+
+  .cap-segment__a {
+    background: color-mix(in srgb, var(--pure-white) calc((1 - var(--cap-range)) * 100%), transparent);
+    box-shadow: 0 1px 2px rgb(17 24 39 / calc((1 - var(--cap-range)) * 0.1));
+    color: color-mix(in oklab, var(--midnight-ink) calc((1 - var(--cap-range)) * 100%), var(--slate));
+  }
+
+  .cap-segment__b {
+    background: color-mix(in srgb, var(--pure-white) calc(var(--cap-range) * 100%), transparent);
+    box-shadow: 0 1px 2px rgb(17 24 39 / calc(var(--cap-range) * 0.1));
+    color: color-mix(in oklab, var(--midnight-ink) calc(var(--cap-range) * 100%), var(--slate));
+    scale: calc(1 - var(--cap-press) * 0.08);
+  }
+
+  .cap-chart {
+    min-height: 0;
+    flex: 1;
+  }
+
+  .cap-chart > .cap-slot__wf,
+  .cap-chart > .cap-slot__hi {
+    height: 100%;
+  }
+
+  .cap-chart__frame {
+    position: relative;
+    display: grid;
+    height: 100%;
+    grid-template-rows: minmax(0, 1fr) auto;
     gap: calc(var(--u) * 6);
   }
 
-  .cap-chip {
-    height: calc(var(--u) * 24);
-    padding: 0 calc(var(--u) * 11);
-    border: 1px solid color-mix(in srgb, var(--midnight-ink) 14%, transparent);
-    border-radius: var(--shape-radius-pill);
-    background: var(--pure-white);
-    color: var(--graphite);
-    font: inherit;
-    font-size: calc(var(--u) * 10.5);
-    font-weight: 600;
-    line-height: 1;
-    cursor: inherit;
+  .cap-chart__svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
   }
 
-  .cap-chip[aria-pressed="true"] {
-    border-color: color-mix(in srgb, var(--midnight-ink) calc(35% + 65% * var(--cap-c)), var(--pure-white));
-    background: color-mix(in srgb, var(--midnight-ink) calc(35% + 65% * var(--cap-c)), var(--pure-white));
-    color: var(--pure-white);
+  .cap-chart__grid {
+    stroke: color-mix(in srgb, var(--midnight-ink) 8%, transparent);
+    stroke-dasharray: 3 4;
+    vector-effect: non-scaling-stroke;
   }
 
-  .cap-cards {
-    display: grid;
-    height: calc(var(--u) * 156);
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: calc(var(--u) * 16);
-    margin-top: calc(var(--u) * 14);
+  .cap-chart__line {
+    fill: none;
+    stroke: var(--ui-accent);
+    stroke-dasharray: 1 1;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2.4;
   }
 
-  .cap-card {
-    --cap-hover: 0;
-    --cap-dim: 1;
-    --lift: 0;
+  .cap-chart__area {
+    fill: url(#cap-chart-fill);
+  }
+
+  /* 30D series: drawn by the design pass, then redrawn by live data (count-up) in the build. */
+  .cap-chart__series--a {
+    --cap-draw: calc(var(--cap-line) * (1 - var(--cap-live) + var(--cap-live) * var(--cap-n)));
+    opacity: calc(1 - var(--cap-range));
+  }
+
+  .cap-chart__series--a .cap-chart__line { stroke-dashoffset: calc(1 - var(--cap-draw)); }
+  /* The fill reveals left → right with the line (inset clip on the path's own box). */
+  .cap-chart__series--a .cap-chart__area { clip-path: inset(0 calc((1 - var(--cap-draw)) * 100%) 0 0); }
+
+  /* 90D series: draws in as the cursor switches the range. */
+  .cap-chart__series--b {
+    opacity: var(--cap-range);
+  }
+
+  .cap-chart__series--b .cap-chart__line { stroke-dashoffset: calc(1 - var(--cap-range)); }
+  .cap-chart__series--b .cap-chart__area { clip-path: inset(0 calc((1 - var(--cap-range)) * 100%) 0 0); }
+
+  .cap-chart__axis {
     display: flex;
-    min-width: 0;
-    flex-direction: column;
-    padding: calc(var(--u) * 7);
-    border: 1px solid color-mix(in srgb, #d5dae2 calc((1 - var(--cap-d)) * 100%), color-mix(in srgb, var(--midnight-ink) 7%, transparent));
-    border-radius: calc(var(--u) * (3 + 11 * var(--cap-d)));
-    background: color-mix(in srgb, var(--pure-white) calc(var(--cap-d) * 100%), transparent);
-    box-shadow:
-      0 calc(var(--u) * 1) calc(var(--u) * 3) rgba(17, 24, 39, calc(0.05 * var(--cap-d))),
-      0 calc(var(--u) * 14) calc(var(--u) * 28) rgba(17, 24, 39, calc(0.13 * max(var(--lift), var(--cap-hover))));
-    opacity: calc(var(--cap-b) * var(--cap-dim));
-    transform: translateY(calc(max(var(--lift), var(--cap-hover)) * var(--u) * -5));
-    transition:
-      --cap-hover 280ms var(--ease-out),
-      --cap-dim 320ms var(--ease-out),
-      filter 320ms var(--ease-out);
-  }
-
-  .cap-card[data-lift="true"] {
-    --lift: var(--cap-lift);
-  }
-
-  .cap-card[data-dim="true"] {
-    --cap-dim: 0.32;
-    filter: grayscale(0.7);
-  }
-
-  .cap-card__media {
-    height: calc(var(--u) * 98);
-  }
-
-  .cap-card__title { margin-top: calc(var(--u) * 9); }
-  .cap-card__meta { margin-top: calc(var(--u) * 5); }
-
-  .cap-card__name {
-    display: flex;
-    align-items: center;
     justify-content: space-between;
-    font-size: calc(var(--u) * 13);
-    font-weight: 650;
-    letter-spacing: -0.03em;
-    white-space: nowrap;
-  }
-
-  .cap-card__name svg {
-    width: calc(var(--u) * 13);
-    height: calc(var(--u) * 13);
     color: var(--slate);
-    transition:
-      color 240ms var(--ease-out),
-      transform 240ms var(--ease-out);
+    font-family: var(--font-mono);
+    font-size: calc(var(--u) * 8.5);
   }
 
-  .cap-card__info {
+  .cap-skel--chart {
+    inset: 0 0 calc(var(--u) * 18);
+    border-radius: calc(var(--u) * 6);
+    opacity: calc(var(--cap-load) * 0.9);
+  }
+
+  /* Traffic sources */
+  .cap-sources {
+    top: calc(var(--u) * 192);
+    left: calc(var(--u) * 696);
+    display: flex;
+    width: calc(var(--u) * 240);
+    height: calc(var(--u) * 220);
+    flex-direction: column;
+    gap: calc(var(--u) * 16);
+    padding: calc(var(--u) * 16);
+  }
+
+  .cap-source-list {
+    display: grid;
+    gap: calc(var(--u) * 14);
+  }
+
+  .cap-source {
+    display: grid;
+    gap: calc(var(--u) * 6);
+  }
+
+  .cap-source__row {
+    display: flex;
+    justify-content: space-between;
+    color: var(--graphite);
+    font-size: calc(var(--u) * 10.5);
+  }
+
+  .cap-source__row strong {
+    color: var(--midnight-ink);
+    font-weight: 650;
+  }
+
+  .cap-source i {
+    display: block;
+    height: calc(var(--u) * 5);
+    overflow: hidden;
+    border-radius: var(--shape-radius-pill);
+    background: var(--fog);
+  }
+
+  .cap-source b {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--ui-accent);
+    opacity: calc(1 - var(--cap-load));
+    transform: scaleX(calc(var(--v) * (1 - var(--cap-live) + var(--cap-live) * var(--cap-n))));
+    transform-origin: left;
+  }
+
+  .cap-source:nth-child(2) b { background: color-mix(in srgb, var(--ui-accent) 72%, var(--pure-white)); }
+  .cap-source:nth-child(3) b { background: color-mix(in srgb, var(--ui-accent) 50%, var(--pure-white)); }
+  .cap-source:nth-child(4) b { background: color-mix(in srgb, var(--ui-accent) 32%, var(--pure-white)); }
+
+  /* Orders table */
+  .cap-table {
+    top: calc(var(--u) * 428);
+    left: calc(var(--u) * 212);
+    display: flex;
+    width: calc(var(--u) * 724);
+    height: calc(var(--u) * 156);
+    flex-direction: column;
+    padding: calc(var(--u) * 14) calc(var(--u) * 16) calc(var(--u) * 6);
+  }
+
+  .cap-table > .cap-card-head {
+    margin-bottom: calc(var(--u) * 10);
+  }
+
+  .cap-table__grid {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 1.7fr 0.8fr 0.9fr 0.7fr;
+    align-items: center;
+    gap: calc(var(--u) * 12);
+  }
+
+  .cap-table__grid > :last-child {
+    justify-self: end;
+  }
+
+  .cap-table__th {
+    padding-bottom: calc(var(--u) * 7);
+    border-bottom: 1px solid var(--ui-line);
     color: var(--slate);
     font-family: var(--font-mono);
     font-size: calc(var(--u) * 8.5);
     letter-spacing: 0.08em;
     text-transform: uppercase;
+  }
+
+  .cap-table__cols > .cap-slot__wf {
+    padding-bottom: calc(var(--u) * 8);
+  }
+
+  .cap-table__row > .cap-slot__wf {
+    display: flex;
+    height: calc(var(--u) * 30);
+    align-items: center;
+  }
+
+  .cap-table__tr {
+    height: calc(var(--u) * 30);
+    padding-inline: calc(var(--u) * 6);
+    margin-inline: calc(var(--u) * -6);
+    width: calc(100% + var(--u) * 12);
+    border-bottom: 1px solid var(--ui-line);
+    border-radius: calc(var(--u) * 6);
+    color: var(--graphite);
+    font-size: calc(var(--u) * 10.5);
+  }
+
+  .cap-table__row:last-child .cap-table__tr {
+    border-bottom: 0;
+  }
+
+  /* Scripted row hover (stage 03 cursor demo). */
+  .cap-table__tr--demo {
+    background: color-mix(in srgb, var(--fog) calc(var(--cap-lift) * 100%), transparent);
+    box-shadow: inset calc(var(--u) * 2) 0 0 color-mix(in srgb, var(--voltage-violet) calc(var(--cap-lift) * 100%), transparent);
+  }
+
+  .cap-table__customer {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--u) * 8);
+    color: var(--midnight-ink);
+    font-weight: 600;
     white-space: nowrap;
   }
 
-  /* Real interactions, only once the design has been "built" (stages 03–04). */
-  .cap:is([data-stage="3"], [data-stage="4"]) :is(.cap-navlink, .cap-button, .cap-chip, .cap-card) {
-    cursor: pointer;
+  .cap-table__customer i {
+    display: grid;
+    width: calc(var(--u) * 20);
+    height: calc(var(--u) * 20);
+    place-items: center;
+    border-radius: 50%;
+    background: var(--ui-accent-soft);
+    color: var(--ui-accent);
+    font-size: calc(var(--u) * 9);
+    font-style: normal;
+    font-weight: 700;
   }
 
+  .cap-table__amount {
+    color: var(--midnight-ink);
+    font-weight: 650;
+  }
+
+  .cap-status {
+    display: inline-block;
+    padding: calc(var(--u) * 2) calc(var(--u) * 7);
+    border-radius: var(--shape-radius-pill);
+    font-size: calc(var(--u) * 9);
+    font-weight: 650;
+  }
+
+  .cap-status--paid {
+    background: color-mix(in srgb, var(--ui-positive) 11%, transparent);
+    color: var(--ui-positive);
+  }
+
+  .cap-status--pending {
+    background: color-mix(in srgb, color-mix(in srgb, #9a6b14 calc(var(--cap-c) * 100%), var(--slate)) 12%, transparent);
+    color: color-mix(in srgb, #9a6b14 calc(var(--cap-c) * 100%), var(--slate));
+  }
+
+  /* Real hover states, only once the design has been "built" (stages 03–04). */
   @media (hover: hover) {
-    .cap:is([data-stage="3"], [data-stage="4"]) .cap-navlink:hover::after {
-      transform: scaleX(1);
-    }
-
-    .cap:is([data-stage="3"], [data-stage="4"]) .cap-navlink:hover {
+    .cap:is([data-stage="3"], [data-stage="4"]) .cap-nav__item:not(.is-active):hover {
+      background: var(--fog);
       color: var(--midnight-ink);
     }
 
-    .cap:is([data-stage="3"], [data-stage="4"]) .cap-button--primary:hover,
-    .cap:is([data-stage="3"], [data-stage="4"]) .cap-button--dark:hover {
-      background: var(--ultra-violet);
+    .cap:is([data-stage="3"], [data-stage="4"]) .cap-table__tr:hover {
+      background: var(--fog);
     }
 
-    .cap:is([data-stage="3"], [data-stage="4"]) .cap-button--primary:hover svg {
-      transform: translateX(calc(var(--u) * 3));
-    }
-
-    .cap:is([data-stage="3"], [data-stage="4"]) .cap-button--ghost:hover {
-      border-color: var(--midnight-ink);
-      background: color-mix(in srgb, var(--midnight-ink) 5%, transparent);
-    }
-
-    .cap:is([data-stage="3"], [data-stage="4"]) .cap-chip:not([aria-pressed="true"]):hover {
-      border-color: color-mix(in srgb, var(--midnight-ink) 42%, transparent);
-      color: var(--midnight-ink);
-    }
-
-    .cap:is([data-stage="3"], [data-stage="4"]) .cap-card:not([data-dim="true"]):hover {
-      --cap-hover: 1;
-    }
-
-    .cap:is([data-stage="3"], [data-stage="4"]) .cap-card:hover .cap-card__name svg {
-      color: var(--voltage-violet);
-      transform: translate(calc(var(--u) * 2), calc(var(--u) * -2));
-    }
-
-    .cap:is([data-stage="3"], [data-stage="4"]) .cap-card:hover .cap-media img {
-      transform: scale(1.05);
-      transition: transform 600ms var(--ease-out);
+    .cap:is([data-stage="3"], [data-stage="4"]) :is(.cap-kpi, .cap-chart-card, .cap-sources):hover {
+      border-color: color-mix(in srgb, var(--voltage-violet) 28%, transparent);
     }
   }
 
@@ -2360,8 +2585,8 @@
   .cap-toast {
     position: absolute;
     z-index: 6;
+    right: calc(var(--u) * 16);
     bottom: calc(var(--u) * 16);
-    left: calc(var(--u) * 16);
     display: inline-flex;
     align-items: center;
     gap: calc(var(--u) * 7);
@@ -2414,6 +2639,55 @@
     stroke-width: 1.4;
   }
 
+  /* Frontend stage: the chart component as code, docked over the canvas' left edge. */
+  .cap-code {
+    position: absolute;
+    z-index: 3;
+    top: 47%;
+    left: -4.5%;
+    display: grid;
+    gap: 0.45em;
+    padding: 1em 1.25em 1.15em;
+    border: 1px solid rgb(255 255 255 / 0.08);
+    border-radius: 12px;
+    background: #15111f;
+    box-shadow:
+      0 26px 50px -18px rgba(8, 4, 20, 0.6),
+      0 10px 24px -14px rgba(55, 22, 99, 0.5);
+    color: #dcd7ec;
+    font-family: var(--font-mono);
+    font-size: clamp(8px, 0.86cqw, 11px);
+    line-height: 1.35;
+    white-space: nowrap;
+    opacity: calc(var(--cap-dev) * var(--cap-o, 1));
+    transform: translateY(calc((1 - var(--cap-dev) * var(--cap-o, 1)) * 14px));
+    pointer-events: none;
+  }
+
+  .cap-code__file {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    margin-bottom: 0.3em;
+    color: #8f8aa8;
+    font-size: 0.92em;
+  }
+
+  .cap-code__file svg {
+    width: 1.15em;
+    height: 1.15em;
+    color: var(--lavender-mist);
+  }
+
+  .cap-code code {
+    font: inherit;
+  }
+
+  .cap-code__k { color: var(--lavender-mist); }
+  .cap-code__f { color: #efd9a6; }
+  .cap-code__s { color: var(--champagne-gold); }
+  .cap-code__t { color: var(--orchid-wash); }
+
   /* Responsive sibling (stage 04) */
   .cap-phone {
     position: absolute;
@@ -2426,8 +2700,8 @@
     border-radius: 14% / 6.5%;
     background: var(--midnight-ink);
     box-shadow:
-      0 30px 60px -18px rgba(55, 22, 99, 0.45),
-      0 12px 24px -12px rgba(17, 24, 39, 0.4);
+      0 30px 60px -18px rgba(8, 4, 20, 0.6),
+      0 12px 24px -12px rgba(55, 22, 99, 0.45);
     opacity: calc(var(--cap-ship) * var(--cap-o, 1));
     transform: translateY(calc((1 - var(--cap-ship) * var(--cap-o, 1)) * 14%));
     pointer-events: none;
@@ -2438,18 +2712,21 @@
     height: 100%;
     overflow: hidden;
     border-radius: 12% / 5.6%;
-    background: var(--surface-warm);
+    background: #f5f6fa;
     container-type: inline-size;
   }
 
-  .cap-phone__site {
+  .cap-phone__app {
     --pu: calc(100cqw / 240);
+    --ui-accent: var(--voltage-violet);
     display: flex;
     height: 100%;
     flex-direction: column;
-    padding: calc(var(--pu) * 14) calc(var(--pu) * 16) calc(var(--pu) * 18);
+    gap: calc(var(--pu) * 12);
+    padding: calc(var(--pu) * 14) calc(var(--pu) * 14) calc(var(--pu) * 10);
     color: var(--midnight-ink);
     font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
   }
 
   .cap-phone__status {
@@ -2468,80 +2745,105 @@
     background: var(--midnight-ink);
   }
 
-  .cap-phone__nav {
+  .cap-phone__head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: calc(var(--pu) * 18);
+    margin-top: calc(var(--pu) * 4);
+  }
+
+  .cap-phone__head > svg {
+    width: calc(var(--pu) * 18);
+    height: calc(var(--pu) * 18);
+    color: var(--graphite);
   }
 
   .cap-phone .cap-logo {
-    gap: calc(var(--pu) * 6);
-    font-size: calc(var(--pu) * 17);
+    gap: calc(var(--pu) * 7);
+    padding-left: 0;
+    font-size: calc(var(--pu) * 16);
   }
 
   .cap-phone .cap-logo__mark {
-    width: calc(var(--pu) * 16);
-    height: calc(var(--pu) * 16);
-    border-radius: calc(var(--pu) * 5);
-  }
-
-  .cap-phone__nav svg {
-    width: calc(var(--pu) * 20);
-    height: calc(var(--pu) * 20);
-  }
-
-  .cap-phone__media {
-    position: relative;
-    height: calc(var(--pu) * 190);
-    overflow: hidden;
-    margin-top: calc(var(--pu) * 18);
-    border-radius: calc(var(--pu) * 14);
-    background: var(--lavender-field);
-  }
-
-  .cap-phone__media img {
-    object-fit: cover;
-  }
-
-  .cap-phone__eyebrow {
-    margin: calc(var(--pu) * 18) 0 0;
-    color: var(--voltage-violet);
-    font-family: var(--font-mono);
-    font-size: calc(var(--pu) * 8.5);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    width: calc(var(--pu) * 18);
+    height: calc(var(--pu) * 18);
+    border-radius: calc(var(--pu) * 6);
   }
 
   .cap-phone__title {
-    margin: calc(var(--pu) * 8) 0 0;
-    font-size: calc(var(--pu) * 30);
+    margin: 0;
+    font-size: calc(var(--pu) * 24);
     font-weight: 650;
-    line-height: 0.95;
-    letter-spacing: -0.06em;
+    letter-spacing: -0.04em;
   }
 
-  .cap-phone__title span {
-    color: var(--ultra-violet);
+  .cap-phone__kpis {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: calc(var(--pu) * 8);
   }
 
-  .cap-phone__cta {
+  .cap-phone__kpi,
+  .cap-phone__chart {
+    display: grid;
+    gap: calc(var(--pu) * 4);
+    padding: calc(var(--pu) * 10);
+    border-radius: calc(var(--pu) * 12);
+    background: var(--pure-white);
+    box-shadow: 0 calc(var(--pu) * 4) calc(var(--pu) * 12) rgba(17, 24, 39, 0.06);
+  }
+
+  .cap-phone em {
+    color: var(--slate);
+    font-size: calc(var(--pu) * 9.5);
+    font-style: normal;
+  }
+
+  .cap-phone__kpi strong {
+    font-size: calc(var(--pu) * 19);
+    font-weight: 650;
+    letter-spacing: -0.04em;
+  }
+
+  .cap-phone__kpi b {
+    color: #15805a;
+    font-size: calc(var(--pu) * 9);
+    font-weight: 650;
+  }
+
+  .cap-phone__chart svg {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .cap-phone__line {
+    fill: none;
+    stroke: var(--voltage-violet);
+    stroke-linecap: round;
+    stroke-width: 5;
+  }
+
+  .cap-phone__area {
+    fill: color-mix(in srgb, var(--voltage-violet) 12%, transparent);
+  }
+
+  .cap-phone__tabs {
     display: flex;
-    height: calc(var(--pu) * 40);
-    align-items: center;
-    justify-content: center;
-    gap: calc(var(--pu) * 6);
+    justify-content: space-around;
     margin-top: auto;
-    border-radius: var(--shape-radius-pill);
-    background: var(--voltage-violet);
-    color: var(--pure-white);
-    font-size: calc(var(--pu) * 13);
-    font-weight: 650;
+    padding-top: calc(var(--pu) * 10);
+    border-top: 1px solid color-mix(in srgb, var(--midnight-ink) 8%, transparent);
   }
 
-  .cap-phone__cta svg {
-    width: calc(var(--pu) * 14);
-    height: calc(var(--pu) * 14);
+  .cap-phone__tabs svg {
+    width: calc(var(--pu) * 18);
+    height: calc(var(--pu) * 18);
+    color: var(--slate);
+  }
+
+  .cap-phone__tabs svg.is-active {
+    color: var(--voltage-violet);
   }
 
   @media (max-width: 1023px) {
@@ -2558,10 +2860,6 @@
 
     .cap {
       --cap-pad-top: 66px;
-    }
-
-    .cap-head__subtitle {
-      font-size: 0.9rem;
     }
 
     .cap-guides__size {
@@ -2582,7 +2880,8 @@
       border-radius: 16px;
     }
 
-    .cap-phone {
+    .cap-phone,
+    .cap-code {
       display: none;
     }
   }
@@ -3861,17 +4160,19 @@
   }
 }
 
-/* Capabilities journey: typed so the static (tab-driven) mode can transition them. */
+/* Capabilities journey: typed so the static (stage-button) mode can transition them. */
 @property --cap-t { syntax: "<number>"; inherits: true; initial-value: 1; }
+@property --cap-c { syntax: "<number>"; inherits: true; initial-value: 1; }
 @property --cap-d { syntax: "<number>"; inherits: true; initial-value: 1; }
+@property --cap-line { syntax: "<number>"; inherits: true; initial-value: 1; }
 @property --cap-grid { syntax: "<number>"; inherits: true; initial-value: 0; }
 @property --cap-wfa { syntax: "<number>"; inherits: true; initial-value: 0; }
 @property --cap-uia { syntax: "<number>"; inherits: true; initial-value: 0; }
 @property --cap-dev { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --cap-live { syntax: "<number>"; inherits: true; initial-value: 1; }
+@property --cap-n { syntax: "<number>"; inherits: true; initial-value: 1; }
+@property --cap-range { syntax: "<number>"; inherits: true; initial-value: 1; }
 @property --cap-ship { syntax: "<number>"; inherits: true; initial-value: 1; }
-@property --cap-nav { syntax: "<number>"; inherits: true; initial-value: 1; }
-@property --cap-hover { syntax: "<number>"; inherits: false; initial-value: 0; }
-@property --cap-c { syntax: "<number>"; inherits: true; initial-value: 1; }
-@property --cap-s3 { syntax: "<number>"; inherits: true; initial-value: 1; }
-@property --cap-s4 { syntax: "<number>"; inherits: true; initial-value: 1; }
-@property --cap-dim { syntax: "<number>"; inherits: false; initial-value: 1; }
+/* Rounded per element, so CSS counters can print scroll-scrubbed numbers. */
+@property --cap-ca { syntax: "<integer>"; inherits: false; initial-value: 0; }
+@property --cap-cb { syntax: "<integer>"; inherits: false; initial-value: 0; }

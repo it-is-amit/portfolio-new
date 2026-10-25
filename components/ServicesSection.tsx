@@ -2,7 +2,6 @@
 
 import { useCallback, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { CSSProperties } from "react";
-import { ArrowDown } from "lucide-react";
 import { CapabilityPreview } from "@/components/CapabilityPreview";
 import { useLenis } from "@/components/SmoothScrollProvider";
 import { usePrefersReducedMotion } from "@/components/ui/shader-canvas-utils/motion";
@@ -10,10 +9,11 @@ import { capabilityStages, copy, type CapabilityStage } from "@/data/profile";
 import { gsap, registerGsapPlugins, revealSectionHeading, ScrollTrigger } from "@/lib/gsap-client";
 
 /*
- * Showcase: one centred composition (heading, subtitle, stage timeline, large website preview)
+ * Showcase: one centred composition (heading, subtitle, stage timeline, large dashboard preview)
  * inside a tall `.cap` wrapper whose child is `position: sticky`. It slides up over the exiting
- * hero, pins, and one scrubbed GSAP timeline maps the wrapper's scroll progress (0 → 1) onto CSS
- * custom properties read by the preview and the ambient background. Native sticky (no GSAP
+ * hero (behind a soft, scroll-shortened top edge), pins, and one scrubbed GSAP timeline maps the
+ * wrapper's scroll progress (0 → 1) onto CSS custom properties read by the preview and by the
+ * section background, which moves through four colour states and ends on the next section's. Native sticky (no GSAP
  * pin-spacer) keeps it friendly with Lenis and the neighbouring ScrollTriggers. Reduced motion or
  * short viewports get a static, button-driven version.
  */
@@ -88,7 +88,7 @@ export function ServicesSection() {
       const stageEl = journey.querySelector<HTMLElement>(".cap__stage");
       const all = (selector: string) => gsap.utils.toArray<HTMLElement>(selector, journey);
       const fx = (...names: string[]) => all(names.map((name) => `[data-cap-fx="${name}"]`).join(","));
-      const slots = { type: all('[data-cap-slot="type"]'), control: all('[data-cap-slot="control"]'), image: all('[data-cap-slot="image"]') };
+      const slots = { type: all('[data-cap-slot="type"]'), control: all('[data-cap-slot="control"]'), visual: all('[data-cap-slot="visual"]') };
       const builds = all("[data-cap-build]");
       const regions = all("[data-cap-region]");
       if (!preview || !figure || !inner || !head || !timelineWrap || !stageEl || !builds.length) return;
@@ -130,19 +130,18 @@ export function ServicesSection() {
 
       // Arrival: while the section slides up over the exiting hero, the preview rises into its
       // pinned position a little faster than the page (a child of the sticky element, never the
-      // sticky element itself, so native sticky is untouched).
+      // sticky element itself, so native sticky is untouched), and the background's soft top edge
+      // (--cap-arrive, see .cap-bg) shortens from a long fade to nothing. Light scrub smoothing
+      // keeps the hand-off fluid without lagging behind the hero's exit.
+      const arrival = { trigger: journey, start: "top bottom", end: "top top", scrub: 0.4, invalidateOnRefresh: true };
       gsap.fromTo(
         figure,
         { y: () => window.innerHeight * 0.12, scale: 0.94 },
-        {
-          y: 0,
-          scale: 1,
-          ease: "none",
-          scrollTrigger: { trigger: journey, start: "top bottom", end: "top top", scrub: true, invalidateOnRefresh: true },
-        },
+        { y: 0, scale: 1, ease: "none", scrollTrigger: arrival },
       );
+      gsap.fromTo(journey, { "--cap-arrive": 0 }, { "--cap-arrive": 1, ease: "power1.out", scrollTrigger: { ...arrival } });
 
-      // Entry: the layout regions (grid, nav rule, hero frame, project band) draw in while the
+      // Entry: the dashboard regions (sidebar, top bar, cards, table) draw in while the
       // section scrolls into place, so the very first scroll already moves the preview.
       gsap.fromTo(
         regions,
@@ -190,64 +189,73 @@ export function ServicesSection() {
         .to(journey, { "--cap-p": 0.25, duration: STAGE_UNITS[1] }, 0)
         .to(journey, { "--cap-p": 0.5, duration: STAGE_UNITS[2] - STAGE_UNITS[1] }, STAGE_UNITS[1])
         .to(journey, { "--cap-p": 0.75, duration: STAGE_UNITS[3] - STAGE_UNITS[2] }, STAGE_UNITS[2])
-        .to(journey, { "--cap-p": 1, duration: 10 - STAGE_UNITS[3] }, STAGE_UNITS[3])
-        // The scroll cue hands over to the moving marker once the wireframe is underway.
-        .to(journey, { "--cap-cue": 0, duration: 0.9 }, 0.25);
+        .to(journey, { "--cap-p": 1, duration: 10 - STAGE_UNITS[3] }, STAGE_UNITS[3]);
 
-      // 01 · Wireframe (0 → 1.7): structure is placed piece by piece.
+      // Section colour journey: each stage change crossfades the whole background behind the
+      // preview (ivory → lavender wash → deep violet → the Tools & Tech night gradient).
+      timeline
+        .to(journey, { "--cap-k2": 1, duration: 1.1, ease: "power1.inOut" }, STAGE_UNITS[1] - 0.05)
+        .to(journey, { "--cap-k3": 1, duration: 0.9, ease: "power1.inOut" }, STAGE_UNITS[2] - 0.1)
+        .to(journey, { "--cap-k4": 1, duration: 1.1, ease: "power1.inOut" }, STAGE_UNITS[3] - 0.05);
+
+      // 01 · Wireframe (0 → 1.7): the dashboard's structure is placed piece by piece.
       const build = (group: string, at: number, stagger = 0) =>
         timeline.to(all(`[data-cap-build="${group}"]`), { "--cap-b": 1, duration: 0.3, ease: "power2.out", stagger }, at);
-      build("nav", 0.05, 0.06);
-      build("title", 0.3);
-      build("copy", 0.42, 0.07);
-      build("media", 0.55);
-      build("actions", 0.72);
-      build("head", 0.86, 0.06);
-      build("card", 0.95, 0.09);
+      build("side", 0.05, 0.06);
+      build("top", 0.28, 0.05);
+      build("kpi", 0.42, 0.07);
+      build("chart", 0.7);
+      build("sources", 0.82);
+      build("table", 0.92, 0.05);
       show(fx("flow"), 1.15, 0.3);
 
-      // 02 · UI design (1.7 → 4.7): type, then colour, then imagery, then refinement.
-      hide(fx("label", "frame", "flow"), 1.7, 0.3);
+      // 02 · UI design (1.7 → 4.7): type, then colour, then controls and charts, then refinement.
+      hide(fx("label", "flow"), 1.7, 0.3);
       timeline
         .to(preview, { "--cap-grid": 0, duration: 1.4 }, 1.75)
         .to(slots.type, { "--cap-t": 1, duration: 0.45, ease: "power2.inOut", stagger: { amount: 0.75 } }, 1.7)
-        // Background state 02: white wireframe paper → warm design surface (03 and 04 follow below).
         .to(preview, { "--cap-c": 1, duration: 0.85, ease: "power1.inOut" }, 2.35)
         .to(slots.control, { "--cap-t": 1, duration: 0.45, ease: "power2.inOut", stagger: { amount: 0.3 } }, 2.5)
-        .to(slots.image, { "--cap-t": 1, duration: 0.5, ease: "power2.inOut", stagger: { amount: 0.35 } }, 2.95)
+        .to(slots.visual, { "--cap-t": 1, duration: 0.5, ease: "power2.inOut", stagger: { amount: 0.35 } }, 2.95)
+        .to(preview, { "--cap-line": 1, duration: 0.7, ease: "power1.inOut" }, 3.15)
         .to(preview, { "--cap-d": 1, duration: 0.8, ease: "power1.inOut" }, 3.55);
       show(fx("select"), 2.0);
       show(fx("tag"), 2.8);
       show(fx("redline"), 3.7);
       hide(fx("select", "tag", "redline"), 4.5, 0.25);
 
-      // 03 · Frontend (4.7 → 8): components register one by one, then real states are exercised.
-      // Background state 03: a cool, lavender-tinted build surface.
-      timeline.to(preview, { "--cap-s3": 1, duration: 0.9, ease: "power1.inOut" }, 4.75);
-      show(fx("outline-nav"), 4.8, 0.25);
-      timeline.to(preview, { "--cap-nav": 1, duration: 0.3 }, 4.85);
-      show(fx("toast"), 4.95, 0.25);
-      show(fx("outline-hero"), 5.1, 0.25);
-      show(fx("outline-projects"), 5.4, 0.25);
+      // 03 · Frontend (4.7 → 8): components register, the UI is wired to data (skeleton, then
+      // values count up and the chart redraws), and a cursor exercises real states.
+      show(fx("outline-side"), 4.8, 0.25);
+      show(fx("code"), 4.9, 0.35);
+      show(fx("outline-kpi"), 4.95, 0.25);
       timeline
-        .to(preview, { "--cap-cur": 1, duration: 0.2 }, 5.55)
-        .to(preview, { "--cap-cx": 632, "--cap-cy": 32, duration: 0.5, ease: "power2.inOut" }, 5.55)
-        .to(preview, { "--cap-hn": 1, duration: 0.15 }, 6.0)
-        .to(preview, { "--cap-cx": 100, "--cap-cy": 300, duration: 0.6, ease: "power2.inOut" }, 6.25)
-        .to(preview, { "--cap-hn": 0, duration: 0.15 }, 6.3)
-        .to(preview, { "--cap-press": 1, duration: 0.17 }, 6.88)
-        .to(preview, { "--cap-press": 0, duration: 0.17 }, 7.08)
-        .to(preview, { "--cap-cx": 498, "--cap-cy": 474, duration: 0.5, ease: "power2.inOut" }, 7.3)
-        .to(preview, { "--cap-lift": 1, duration: 0.23 }, 7.72);
+        .to(preview, { "--cap-load": 1, duration: 0.25 }, 4.95)
+        .to(preview, { "--cap-live": 1, duration: 0.05 }, 5.2)
+        .to(preview, { "--cap-load": 0, duration: 0.25 }, 5.3)
+        .to(preview, { "--cap-n": 1, duration: 0.9, ease: "power1.out" }, 5.3);
+      show(fx("outline-chart"), 5.2, 0.25);
+      show(fx("outline-table"), 5.45, 0.25);
+      show(fx("toast"), 5.6, 0.25);
+      timeline
+        .to(preview, { "--cap-cur": 1, duration: 0.2 }, 5.75)
+        .to(preview, { "--cap-cx": 70, "--cap-cy": 118, duration: 0.45, ease: "power2.inOut" }, 5.75)
+        .to(preview, { "--cap-hn": 1, duration: 0.15 }, 6.15)
+        .to(preview, { "--cap-cx": 646, "--cap-cy": 214, duration: 0.55, ease: "power2.inOut" }, 6.4)
+        .to(preview, { "--cap-hn": 0, duration: 0.15 }, 6.45)
+        .to(preview, { "--cap-press": 1, duration: 0.15 }, 6.95)
+        .to(preview, { "--cap-range": 1, duration: 0.6, ease: "power1.inOut" }, 7.0)
+        .to(preview, { "--cap-press": 0, duration: 0.15 }, 7.12)
+        .to(preview, { "--cap-cx": 520, "--cap-cy": 530, duration: 0.45, ease: "power2.inOut" }, 7.35)
+        .to(preview, { "--cap-lift": 1, duration: 0.2 }, 7.72);
 
       // 04 · Final product (8 → 10): tooling steps away, depth and the responsive view arrive.
       hide(fx("toast"), 7.9, 0.2);
-      hide(fx("outline-projects", "outline-hero", "outline-nav"), 8.0, 0.25, 0.08);
+      hide(fx("code"), 7.95, 0.3);
+      hide(fx("outline-table", "outline-chart", "outline-kpi", "outline-side"), 8.0, 0.25, 0.06);
       timeline
         .to(preview, { "--cap-cur": 0, "--cap-lift": 0, duration: 0.3 }, 8.0)
-        .to(preview, { "--cap-ship": 1, duration: 0.8, ease: "power2.out" }, 8.25)
-        // Background state 04: the launch palette (violet and champagne light).
-        .to(preview, { "--cap-s4": 1, duration: 1, ease: "power1.inOut" }, 8.1);
+        .to(preview, { "--cap-ship": 1, duration: 0.8, ease: "power2.out" }, 8.25);
       timeline.to(fx("phone"), { "--cap-o": 1, duration: 0.8, ease: "power2.out" }, 8.7);
 
       timeline.to({}, { duration: 0.01 }, 9.99);
@@ -281,15 +289,23 @@ export function ServicesSection() {
 
   return (
     <section
-      className="section-services relative overflow-x-clip bg-[var(--surface-warm)] pb-[clamp(48px,6vw,96px)] text-[var(--midnight-ink)]"
+      className="section-services relative overflow-x-clip text-[var(--midnight-ink)]"
       id="what-i-do"
       ref={sectionRef}
       aria-labelledby="services-title"
     >
-      <div className="cap" ref={journeyRef} data-mode={scrollMode ? "scroll" : "static"} data-stage={stage}>
+      <div
+        className="cap"
+        ref={journeyRef}
+        data-mode={scrollMode ? "scroll" : "static"}
+        data-stage={stage}
+        // Stages 03–04 sit on a dark background; the section dock reads this to switch its glass tone.
+        data-tone={scrollMode && stage >= 3 ? "dark" : undefined}
+      >
         <div className="cap__sticky">
-          {/* Ambient layer: soft lighting, gradients and a faint grid, all driven by --cap-p. */}
-          <div className="cap-ambient" aria-hidden="true">
+          {/* Section background: the four-state colour journey, soft light and a faint grid. */}
+          <div className="cap-bg" aria-hidden="true">
+            <span className="cap-bg__night" />
             <span className="cap-ambient__glow cap-ambient__glow--violet" />
             <span className="cap-ambient__glow cap-ambient__glow--lavender" />
             <span className="cap-ambient__glow cap-ambient__glow--gold" />
@@ -298,9 +314,6 @@ export function ServicesSection() {
 
           <div className="cap__inner">
             <header className="cap-head">
-              <p className="cap-head__eyebrow">
-                01 <span aria-hidden="true">/</span> {copy.services}
-              </p>
               <h2 className="cap-head__title" id="services-title" data-section-heading>
                 <span>{copy.servicesTitleLead}</span> <span className="cap-head__accent">{copy.servicesTitleAccent}</span>
               </h2>
@@ -334,16 +347,10 @@ export function ServicesSection() {
                   );
                 })}
               </div>
-              {scrollMode && (
-                <p className="cap-cue" aria-hidden="true">
-                  <ArrowDown />
-                  Scroll to build the site
-                </p>
-              )}
             </div>
 
             <div className="cap__stage">
-              <figure className="cap__figure" aria-label="A concept website shown at each stage, from wireframe to launched product">
+              <figure className="cap__figure" aria-label="A concept analytics dashboard shown at each stage: wireframe, UI design, frontend build with live data, and the shipped product">
                 {/* Design-tool guides around the canvas; they recede as the build becomes a product. */}
                 <span className="cap-guides" aria-hidden="true">
                   <i className="cap-guides__line cap-guides__line--top" />

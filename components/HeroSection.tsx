@@ -24,6 +24,7 @@ export function HeroSection({ introReady }: HeroSectionProps) {
     const heroStage = section.closest<HTMLElement>("[data-hero-stage]") ?? section;
 
     registerGsapPlugins();
+    let shaderCanvas: HTMLCanvasElement | null = null;
     const context = gsap.context(() => {
       const mobile = window.matchMedia("(max-width: 767px)").matches;
       const enterElements = section.querySelectorAll<HTMLElement>("[data-hero-enter]");
@@ -53,10 +54,14 @@ export function HeroSection({ introReady }: HeroSectionProps) {
       );
 
       // Exit: while the stage is sticky, the card shrinks, drifts up slightly, blurs and fades,
-      // scrubbed directly by scroll so it finishes exactly as the next section reaches the top.
+      // scrubbed by scroll (with light smoothing) so it finishes as the next section reaches the
+      // top. The fade completes a little before the end, so the incoming section's soft edge only
+      // ever overlaps a faint, softened card. The WebGL background is frozen while the card is
+      // blurred: a live shader under a CSS blur is the most expensive thing on the page.
       const heroCard = heroStage.querySelector<HTMLElement>("[data-hero-card]");
       const runway = heroStage.closest<HTMLElement>("[data-hero-runway]") ?? heroStage;
       if (heroCard) {
+        const shader = heroCard.querySelector<HTMLCanvasElement>("canvas");
         gsap.set(heroCard, { transformOrigin: "50% 50%", willChange: "transform, filter, opacity" });
         gsap.timeline({
           defaults: { ease: "none" },
@@ -64,18 +69,27 @@ export function HeroSection({ introReady }: HeroSectionProps) {
             trigger: runway,
             start: "top top",
             end: () => `+=${heroStage.offsetHeight}`,
-            scrub: true,
+            scrub: 0.5,
             invalidateOnRefresh: true,
+            onUpdate: (self) => {
+              if (!shader) return;
+              const paused = self.progress > 0.04;
+              if ((shader.dataset.paused === "true") !== paused) shader.dataset.paused = String(paused);
+            },
           },
         })
-          .fromTo(heroCard, { scale: 1, yPercent: 0 }, { scale: mobile ? 0.86 : 0.8, yPercent: mobile ? -4 : -7, duration: 1 }, 0)
-          .fromTo(heroCard, { filter: "blur(0px)" }, { filter: mobile ? "blur(8px)" : "blur(12px)", duration: 0.85, ease: "power1.in" }, 0)
-          .fromTo(heroCard, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.7, ease: "sine.in" }, 0.05);
+          .fromTo(heroCard, { scale: 1, yPercent: 0 }, { scale: mobile ? 0.86 : 0.8, yPercent: mobile ? -4 : -7, duration: 1, ease: "power1.out" }, 0)
+          .fromTo(heroCard, { filter: "blur(0px)" }, { filter: mobile ? "blur(8px)" : "blur(10px)", duration: 0.8, ease: "power1.in" }, 0)
+          .fromTo(heroCard, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.62, ease: "power1.in" }, 0.08);
+        shaderCanvas = shader;
       }
 
     }, section);
 
-    return () => context.revert();
+    return () => {
+      context.revert();
+      if (shaderCanvas) delete shaderCanvas.dataset.paused;
+    };
   }, [introReady, reducedMotion]);
 
   return (

@@ -308,6 +308,13 @@ export function ShaderCanvas({
         frame = null;
         return;
       }
+      // A parent can freeze the shader (e.g. while it is blurred during the hero exit) by setting
+      // data-paused="true" on the canvas: the loop keeps ticking cheaply but skips all GL work.
+      if (canvas.dataset.paused === "true") {
+        lastFrame = now;
+        frame = window.requestAnimationFrame(loop);
+        return;
+      }
       if (lastFrame) elapsed += Math.min(0.1, (now - lastFrame) / 1000);
       lastFrame = now;
       pointer.x += (pointer.targetX - pointer.x) * 0.06;
