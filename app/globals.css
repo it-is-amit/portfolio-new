@@ -295,7 +295,48 @@
   }
 
   .experience-story {
+    position: relative;
     background: var(--surface-warm);
+  }
+
+  /*
+   * Hero → Capabilities hand-off (motion only). The runway is two viewports tall; the hero stage
+   * sticks for the first, while .section-services (pulled up by one viewport, so its document
+   * position is unchanged) slides over it. HeroSection scrubs the card's shrink/blur/fade over the
+   * same distance. Under reduced motion everything stays in normal flow.
+   */
+  .hero-runway {
+    position: relative;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-runway {
+      height: 200vh;
+      height: 200svh;
+    }
+
+    .hero-runway > .experience-story {
+      position: sticky;
+      top: 0;
+    }
+
+    .hero-runway + .section-services {
+      z-index: 1;
+      margin-top: -100vh;
+      margin-top: -100svh;
+    }
+
+    /* Soft leading edge; its height matches the hero's bottom inset, so at rest it sits in the gutter. */
+    .hero-runway + .section-services::before {
+      position: absolute;
+      bottom: 100%;
+      left: 0;
+      width: 100%;
+      height: var(--layout-hero-inset);
+      background: linear-gradient(to bottom, color-mix(in srgb, var(--surface-warm) 0%, transparent), var(--surface-warm));
+      content: "";
+      pointer-events: none;
+    }
   }
 
   /*

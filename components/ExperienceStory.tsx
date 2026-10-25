@@ -15,8 +15,11 @@ type ExperienceStoryProps = {
 
 export function ExperienceStory({ introReady }: ExperienceStoryProps) {
   return (
+    // Runway: in motion mode the hero stage stays sticky for one viewport of scroll while the next
+    // section slides up over it (see .hero-runway in globals.css). Document height is unchanged.
+    <div className="hero-runway" data-hero-runway>
     <section
-      className="experience-story relative isolate box-border flex h-screen supports-[height:100svh]:h-svh w-full items-center justify-center overflow-hidden bg-[var(--surface-warm)] p-[var(--layout-hero-inset)]"
+      className="experience-story isolate box-border flex h-screen supports-[height:100svh]:h-svh w-full items-center justify-center overflow-hidden bg-[var(--surface-warm)] p-[var(--layout-hero-inset)]"
       id="experience-story"
       data-hero-stage
       aria-label="Portfolio introduction"
@@ -35,5 +38,6 @@ export function ExperienceStory({ introReady }: ExperienceStoryProps) {
         <HeroSection introReady={introReady} />
       </div>
     </section>
+    </div>
   );
 }

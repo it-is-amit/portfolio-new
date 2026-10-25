@@ -46,7 +46,8 @@ export function ProfileNotch() {
 
     let naturalTop = 0;
     const measureNaturalTop = () => {
-      const stage = heroStage.getBoundingClientRect();
+      // The stage is sticky inside its runway, so measure the runway's (static) position.
+      const stage = (heroStage.closest<HTMLElement>("[data-hero-runway]") ?? heroStage).getBoundingClientRect();
       const stagePadding = Number.parseFloat(getComputedStyle(heroStage).paddingTop) || 0;
       const cardBorder = Number.parseFloat(getComputedStyle(heroCard).borderTopWidth) || 0;
       naturalTop = stage.top + window.scrollY + stagePadding + cardBorder;

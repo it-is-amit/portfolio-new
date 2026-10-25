@@ -52,37 +52,25 @@ export function HeroSection({ introReady }: HeroSectionProps) {
         "-=0.4",
       );
 
+      // Exit: while the stage is sticky, the card shrinks, drifts up slightly, blurs and fades,
+      // scrubbed directly by scroll so it finishes exactly as the next section reaches the top.
       const heroCard = heroStage.querySelector<HTMLElement>("[data-hero-card]");
+      const runway = heroStage.closest<HTMLElement>("[data-hero-runway]") ?? heroStage;
       if (heroCard) {
-        gsap.set(heroCard, {
-          filter: "blur(0px)",
-          transformOrigin: "50% 50%",
-          willChange: "transform, filter, opacity",
-        });
-
+        gsap.set(heroCard, { transformOrigin: "50% 50%", willChange: "transform, filter, opacity" });
         gsap.timeline({
+          defaults: { ease: "none" },
           scrollTrigger: {
-            trigger: heroStage,
+            trigger: runway,
             start: "top top",
-            end: "bottom top",
-            scrub: 0.55,
+            end: () => `+=${heroStage.offsetHeight}`,
+            scrub: true,
             invalidateOnRefresh: true,
           },
         })
-          .to(heroCard, {
-            scale: mobile ? 1.04 : 1.08,
-            filter: "blur(1px)",
-            autoAlpha: 1,
-            ease: "none",
-            duration: 0.35,
-          })
-          .to(heroCard, {
-            scale: mobile ? 1.2 : 1.3,
-            filter: mobile ? "blur(10px)" : "blur(14px)",
-            autoAlpha: 0,
-            ease: "none",
-            duration: 0.65,
-          });
+          .fromTo(heroCard, { scale: 1, yPercent: 0 }, { scale: mobile ? 0.86 : 0.8, yPercent: mobile ? -4 : -7, duration: 1 }, 0)
+          .fromTo(heroCard, { filter: "blur(0px)" }, { filter: mobile ? "blur(8px)" : "blur(12px)", duration: 0.85, ease: "power1.in" }, 0)
+          .fromTo(heroCard, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.7, ease: "sine.in" }, 0.05);
       }
 
     }, section);
