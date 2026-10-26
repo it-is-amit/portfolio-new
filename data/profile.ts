@@ -77,30 +77,18 @@ export const navigation = [
 export const capabilityStages = [
   {
     id: "wireframe",
-    number: "01",
-    label: "UX & Wireframing",
-    shortLabel: "Wireframe",
     tool: "Figma — Pulse / Wireframe",
   },
   {
     id: "visual-design",
-    number: "02",
-    label: "UI Design",
-    shortLabel: "UI Design",
     tool: "Figma — Pulse / UI",
   },
   {
     id: "frontend-build",
-    number: "03",
-    label: "Frontend Development",
-    shortLabel: "Frontend",
     tool: "localhost:3000/dashboard",
   },
   {
     id: "launch",
-    number: "04",
-    label: "Final Product",
-    shortLabel: "Final",
     tool: "pulse.app/overview",
   },
 ] as const;

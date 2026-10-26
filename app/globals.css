@@ -327,9 +327,8 @@
     }
 
     /*
-     * The section itself is transparent: in scroll mode its sticky background layer (.cap-bg) has a
-     * long, scroll-shortened soft top edge, so nothing hard ever slides over the blurring hero. Only
-     * the static fallback (short viewports) is opaque, and gets a gentle leading fade instead.
+     * No overlay in scroll mode: the section stays transparent while the hero blurs away (see
+     * --cap-solid). Only the static fallback (short viewports) is opaque; it gets a gentle fade.
      */
     .hero-runway + .section-services:has(> .cap[data-mode="static"])::before {
       position: absolute;
@@ -867,439 +866,41 @@
 
   /* ------------------------------------------------------------------
    * Capabilities — centred design-to-code showcase
-   * Scroll mode: a tall `.cap` runway with a sticky child. The sticky element's top is negative by
-   * --cap-shift (heading block + gap, measured in ServicesSection), so the heading arrives with the
-   * preview, then scrolls away while the timeline and the large preview pin in place. When the
-   * whole composition fits (e.g. phones) --cap-shift is 0 and everything pins. A scrubbed GSAP
-   * timeline writes the --cap-* custom properties inline. Static mode (reduced motion or short
-   * viewports): normal flow, and the same properties come from [data-stage] below.
-   *
-   * Section colour journey (scroll mode): the whole background behind the preview moves through
-   * four states — warm ivory (wireframe) → lavender wash (UI design) → deep violet (frontend) →
-   * the night gradient of the Tools & Tech section that follows, so the release is seamless.
-   *   --cap-k2 / --cap-k3 / --cap-k4 (0–1): crossfades into states 2, 3 and 4.
-   *   --cap-k3 doubles as the "dark" switch for the heading, timeline, grid and guides.
-   *   --cap-arrive (0–1): hand-off from the hero; the background's top edge is a long soft fade
-   *   that shortens to nothing as the section settles, so there is never a hard overlay edge.
+   * Layout, background layers, glows and guides are Tailwind utilities in ServicesSection.tsx.
+   * This block holds only what they share: the scroll-driven colour tokens. A scrubbed GSAP
+   * timeline writes the --cap-* inputs inline on `.cap`; static mode (reduced motion or short
+   * viewports) shows the finished product, so the inputs keep their final/defaults there.
+   *   --cap-k2 / --cap-k3 / --cap-k4 (0–1): section colour crossfades (lavender, deep violet, night);
+   *     --cap-k3 is also the "dark" switch for the heading, grid and guides.
+   *   --cap-arrive (0–1): hand-off from the hero. --cap-solid keeps the section background fully
+   *     transparent until the hero has gone, so nothing ever covers it (same ivory, so the switch
+   *     is invisible).
+   *   --cap-glow (0–1): glow behind the preview and the ambient light, building up with scroll.
+   *   --cap-p (0–1): journey position (ambient drift, guides, grid).
    * ------------------------------------------------------------------ */
   .cap {
     --cap-shift: 0px;
-    --cap-pad-top: clamp(62px, 8vh, 80px);
     --cap-k2: 0;
     --cap-k3: 0;
     --cap-k4: 0;
-    --cap-ink: color-mix(in oklab, #f4f2fa calc(var(--cap-k3) * 100%), var(--midnight-ink));
+    --cap-solid: 1;
+    --cap-ink: color-mix(in oklch, #f4f2fa calc(var(--cap-k3) * 100%), var(--midnight-ink));
     --cap-ink-soft: color-mix(in oklab, #bdb7d1 calc(var(--cap-k3) * 100%), var(--graphite));
-    --cap-ink-muted: color-mix(in oklab, #8f8aa8 calc(var(--cap-k3) * 100%), var(--slate));
     --cap-accent: color-mix(in oklab, var(--orchid-wash) calc(var(--cap-k3) * 100%), var(--voltage-violet));
-    position: relative;
+    --cap-grid-ink: color-mix(in srgb, var(--pure-white) calc(var(--cap-k3) * 100%), var(--midnight-ink));
   }
 
   .cap[data-mode="scroll"] {
-    height: calc(100vh + var(--cap-shift) + 240vh);
-    height: calc(100svh + var(--cap-shift) + 240vh);
-  }
-
-  .cap[data-mode="static"] {
-    padding-block: clamp(76px, 9vw, 136px) clamp(48px, 6vw, 96px);
-    background: var(--surface-warm);
-  }
-
-  .cap__sticky {
-    position: relative;
-  }
-
-  .cap[data-mode="scroll"] .cap__sticky {
-    position: sticky;
-    top: calc(-1 * var(--cap-shift));
-    height: calc(100vh + var(--cap-shift));
-    height: calc(100svh + var(--cap-shift));
-    overflow: clip;
-  }
-
-  .cap__inner {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    width: 100%;
-    max-width: 1480px;
-    flex-direction: column;
-    align-items: center;
-    margin-inline: auto;
-    padding-inline: clamp(20px, 5vw, 84px);
-  }
-
-  .cap[data-mode="scroll"] .cap__inner {
-    height: 100%;
-    padding-block: var(--cap-pad-top) calc(var(--layout-dock-clearance) - 2px);
-  }
-
-  /* Everything fits (e.g. phones): the whole composition pins, centred between notch and dock. */
-  .cap[data-mode="scroll"][data-fit="all"] .cap__inner {
-    justify-content: center;
-  }
-
-  /* Heading block: title + one-line subtitle. */
-  .cap-head {
-    display: grid;
-    max-width: 1000px;
-    justify-items: center;
-    gap: clamp(10px, 1.6vh, 16px);
-    text-align: center;
-  }
-
-  .cap-head__title {
-    margin: 0;
-    color: var(--cap-ink);
-    font-size: clamp(2rem, min(3.7vw, 6.6vh), 4.25rem);
-    font-weight: 600;
-    line-height: 0.98;
-    letter-spacing: -0.065em;
-  }
-
-  /* Each sentence stays whole, so narrow screens break between them. */
-  .cap-head__title > span {
-    display: inline-block;
-  }
-
-  .cap-head__accent {
-    color: var(--cap-accent);
-  }
-
-  .cap-head__subtitle {
-    margin: 0;
-    color: var(--cap-ink-soft);
-    font-size: min(clamp(0.95rem, 1.1vw, 1.08rem), 3.4vw);
-    line-height: 1.45;
-    letter-spacing: -0.02em;
-    white-space: nowrap;
-  }
-
-  /* Preview stage */
-  .cap__stage {
-    position: relative;
-    display: flex;
-    width: 100%;
-    justify-content: center;
-    margin-top: clamp(24px, 2.8vh, 30px);
-  }
-
-  .cap__figure {
-    position: relative;
-    width: min(100%, 1100px);
-    margin: 0;
-    container-type: inline-size;
-  }
-
-  /*
-   * Scroll mode: the preview takes the height left once pinned (notch clearance, timeline, gaps,
-   * browser bar, dock), at the canvas' 16:10 ratio. ≈920px wide at 1440×900, ≈1170px at 1920×1080.
-   */
-  .cap[data-mode="scroll"] .cap__figure {
-    width: min(100%, 1240px, calc((100svh - var(--cap-pad-top) - 178px - clamp(30px, 2.6vw, 38px)) * 1.6));
-  }
-
-  /* Section background: the colour journey plus ambient light and a faint grid. */
-  .cap-bg {
-    --cap-bg-1: var(--surface-warm);
-    --cap-bg-2: #efe6fc;
-    --cap-bg-3: #211a39;
-    position: absolute;
-    z-index: 0;
-    inset: 0;
-    overflow: hidden;
-    background-color: color-mix(
-      in oklab,
-      var(--cap-bg-3) calc(var(--cap-k3) * 100%),
-      color-mix(in oklab, var(--cap-bg-2) calc(var(--cap-k2) * 100%), var(--cap-bg-1))
-    );
-    pointer-events: none;
-  }
-
-  .cap[data-mode="scroll"] .cap-bg {
-    --cap-edge: calc((1 - var(--cap-arrive, 1)) * 46vh);
-    mask-image: linear-gradient(
-      to bottom,
-      transparent 0,
-      rgb(0 0 0 / 0.3) calc(var(--cap-edge) * 0.4),
-      rgb(0 0 0 / 0.75) calc(var(--cap-edge) * 0.72),
-      #000 calc(var(--cap-edge) + 1px)
-    );
-  }
-
-  /*
-   * State 04: the Tools & Tech night gradient, mirrored vertically. That section's top edge
-   * (gradient start, centre highlight, top-right violet glow) is reproduced on this layer's bottom
-   * edge, so when the showcase releases the two surfaces meet without a seam.
-   */
-  .cap-bg__night {
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(ellipse at 52% 100%, rgba(255, 255, 255, 0.045), transparent 72%),
-      radial-gradient(ellipse 72% 88% at 92% 96%, rgba(134, 47, 231, 0.17), transparent 66%),
-      radial-gradient(ellipse 58% 72% at 9% 22%, rgba(196, 151, 63, 0.055), transparent 68%),
-      linear-gradient(42deg, #171521 0%, #10151e 54%, #191523 100%);
-    opacity: var(--cap-k4);
-  }
-
-  .cap-ambient__grid {
-    --cap-grid-ink: color-mix(in srgb, var(--pure-white) calc(var(--cap-k3) * 100%), var(--midnight-ink));
-    position: absolute;
-    inset: -64px 0;
-    background-image:
-      linear-gradient(to right, color-mix(in srgb, var(--cap-grid-ink) 6%, transparent) 1px, transparent 1px),
-      linear-gradient(to bottom, color-mix(in srgb, var(--cap-grid-ink) 6%, transparent) 1px, transparent 1px);
-    background-position: center top;
-    background-size: 64px 64px;
-    mask-image: radial-gradient(ellipse 72% 64% at 50% 58%, #000 10%, transparent 78%);
-    /* Blueprint-strong while wireframing, receding to a trace as the product ships; drifts with scroll. */
-    opacity: calc(0.35 + 0.65 * clamp(0, 1 - var(--cap-p, 1) * 1.5, 1));
-    transform: translate3d(0, calc(var(--cap-p, 1) * -64px), 0);
-  }
-
-  .cap-ambient__glow {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 64vmax;
-    aspect-ratio: 1;
-    border-radius: 50%;
-  }
-
-  .cap-ambient__glow--violet {
-    background: radial-gradient(closest-side, color-mix(in srgb, var(--voltage-violet) 15%, transparent), transparent);
-    opacity: calc(0.5 + 0.5 * var(--cap-p, 1));
-    transform: translate3d(calc(-50% - 36vw + var(--cap-p, 1) * 20vw), calc(-50% - 14vh + var(--cap-p, 1) * 18vh), 0);
-  }
-
-  .cap-ambient__glow--lavender {
-    background: radial-gradient(closest-side, color-mix(in srgb, var(--lavender-mist) 18%, transparent), transparent);
-    opacity: calc(0.35 + 0.65 * clamp(0, (var(--cap-p, 1) - 0.2) * 2, 1));
-    transform: translate3d(calc(-50% + 34vw - var(--cap-p, 1) * 16vw), calc(-50% + 18vh - var(--cap-p, 1) * 22vh), 0);
-  }
-
-  .cap-ambient__glow--gold {
-    width: 52vmax;
-    background: radial-gradient(closest-side, color-mix(in srgb, var(--champagne-gold) 16%, transparent), transparent);
-    opacity: clamp(0, (var(--cap-p, 1) - 0.72) * 3.6, 1);
-    transform: translate3d(calc(-50% + (var(--cap-p, 1) - 0.5) * 12vw), calc(-50% + 16vh), 0);
-  }
-
-  /* Design-tool guides around the canvas: present while designing, gone once it's a product. */
-  .cap-guides {
-    position: absolute;
-    z-index: -1;
-    inset: 0;
-    opacity: clamp(0, 1 - (var(--cap-p, 1) - 0.45) * 3, 1);
-    pointer-events: none;
-  }
-
-  .cap-guides__line {
-    position: absolute;
-    left: -50vw;
-    right: -50vw;
-    border-top: 1px dashed color-mix(in srgb, var(--lavender-mist) 38%, transparent);
-  }
-
-  .cap-guides__line--top { top: 0; }
-  .cap-guides__line--bottom { bottom: 0; }
-
-  .cap-guides__corner {
-    position: absolute;
-    width: 14px;
-    height: 14px;
-    border-color: color-mix(in srgb, var(--cap-accent) 55%, transparent);
-    border-style: solid;
-    border-width: 0;
-  }
-
-  .cap-guides__corner--tl { top: -10px; left: -10px; border-top-width: 1.5px; border-left-width: 1.5px; }
-  .cap-guides__corner--tr { top: -10px; right: -10px; border-top-width: 1.5px; border-right-width: 1.5px; }
-  .cap-guides__corner--bl { bottom: -10px; left: -10px; border-bottom-width: 1.5px; border-left-width: 1.5px; }
-  .cap-guides__corner--br { right: -10px; bottom: -10px; border-right-width: 1.5px; border-bottom-width: 1.5px; }
-
-  .cap-guides__size {
-    position: absolute;
-    top: -24px;
-    left: 0;
-    color: color-mix(in srgb, var(--cap-accent) 75%, transparent);
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.1em;
-  }
-
-  /*
-   * Stage timeline (between the heading and the preview). --cap-p (0–1) is the journey position: in scroll
-   * mode it is scrubbed piecewise by the same timeline as the preview (each quarter = one stage, so a
-   * segment starts filling exactly when its stage begins and runs backwards on reverse scroll); in
-   * static mode it steps to the end of the shown stage. Segment i fills with clamp(p·4 − i).
-   * Colours follow --cap-k3, so it reads as light glass on the light states and dark glass on the dark ones.
-   */
-  .cap[data-mode="static"][data-stage="1"] { --cap-p: 0.25; }
-  .cap[data-mode="static"][data-stage="2"] { --cap-p: 0.5; }
-  .cap[data-mode="static"][data-stage="3"] { --cap-p: 0.75; }
-
-  .cap-timeline-wrap {
-    position: relative;
-    z-index: 3;
-    display: flex;
-    width: 100%;
-    flex-direction: column;
-    align-items: center;
-    margin-top: clamp(18px, 2.4vh, 26px);
-  }
-
-  .cap-timeline {
-    display: grid;
-    width: min(780px, 100%);
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: clamp(8px, 1.3vw, 18px);
-    padding: 12px clamp(14px, 1.6vw, 20px) 4px;
-    border: 1px solid color-mix(in srgb, var(--cap-ink) calc(8% + var(--cap-k3) * 4%), transparent);
-    border-radius: 20px;
-    background: color-mix(in srgb, var(--pure-white) calc(78% - var(--cap-k3) * 72%), transparent);
-    container: cap-timeline / inline-size;
-  }
-
-  .cap-timeline__step {
-    display: grid;
-    min-width: 0;
-    min-height: 40px;
-    align-content: start;
-    gap: 9px;
-    padding: 0 0 8px;
-    border: 0;
-    border-radius: 10px;
-    background: transparent;
-    color: var(--cap-ink-muted);
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
-    transition: color 240ms var(--ease-out);
-  }
-
-  .cap-timeline__bar {
-    position: relative;
-    display: block;
-    height: 4px;
-    overflow: hidden;
-    border-radius: var(--shape-radius-pill);
-    background: color-mix(in srgb, var(--cap-ink) calc(9% + var(--cap-k3) * 3%), transparent);
-  }
-
-  .cap-timeline__fill {
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: var(--voltage-violet);
-    transform: scaleX(clamp(0, calc(var(--cap-p, 1) * 4 - var(--i, 0)), 1));
-    transform-origin: left;
-  }
-
-  .cap[data-mode="static"] .cap-timeline__fill {
-    transition: transform 600ms var(--ease-out);
-  }
-
-  .cap-timeline__meta {
-    display: flex;
-    min-width: 0;
-    align-items: baseline;
-    gap: 8px;
-  }
-
-  .cap-timeline__number {
-    flex: none;
-    color: color-mix(in oklab, #615c7a calc(var(--cap-k3) * 100%), var(--mist));
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    transition: color 240ms var(--ease-out);
-  }
-
-  .cap-timeline__label {
-    min-width: 0;
-    overflow: hidden;
-    font-size: 13.5px;
-    font-weight: 650;
-    letter-spacing: -0.02em;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  /* Completed: lighter violet bar, readable label. */
-  .cap[data-stage="2"] .cap-timeline__step:nth-of-type(-n + 1),
-  .cap[data-stage="3"] .cap-timeline__step:nth-of-type(-n + 2),
-  .cap[data-stage="4"] .cap-timeline__step:nth-of-type(-n + 3) {
-    color: var(--cap-ink-soft);
-  }
-
-  .cap[data-stage="2"] .cap-timeline__step:nth-of-type(-n + 1) :is(.cap-timeline__fill),
-  .cap[data-stage="3"] .cap-timeline__step:nth-of-type(-n + 2) :is(.cap-timeline__fill),
-  .cap[data-stage="4"] .cap-timeline__step:nth-of-type(-n + 3) :is(.cap-timeline__fill) {
-    background: var(--lavender-mist);
-  }
-
-  .cap[data-stage="2"] .cap-timeline__step:nth-of-type(-n + 1) .cap-timeline__number,
-  .cap[data-stage="3"] .cap-timeline__step:nth-of-type(-n + 2) .cap-timeline__number,
-  .cap[data-stage="4"] .cap-timeline__step:nth-of-type(-n + 3) .cap-timeline__number {
-    color: var(--lavender-mist);
-  }
-
-  /* Active: full accent bar (filling with scroll), strong label, accent number. */
-  .cap-timeline__step[aria-current="step"] {
-    color: var(--cap-ink);
-  }
-
-  .cap-timeline__step[aria-current="step"] .cap-timeline__number {
-    color: var(--cap-accent);
-  }
-
-  .cap-timeline__step[aria-current="step"] .cap-timeline__bar {
-    background: color-mix(in srgb, var(--voltage-violet) calc(16% + var(--cap-k3) * 10%), transparent);
-  }
-
-  .cap-timeline__step:focus-visible {
-    outline: 2px solid var(--cap-accent);
-    outline-offset: 4px;
-  }
-
-  @media (hover: hover) {
-    .cap-timeline__step:not([aria-current="step"]):hover {
-      color: var(--cap-accent);
-    }
-  }
-
-  .cap-timeline__label-short {
-    display: none;
-  }
-
-  @container cap-timeline (max-width: 640px) {
-    .cap-timeline__label-full {
-      display: none;
-    }
-
-    .cap-timeline__label-short {
-      display: inline;
-    }
-  }
-
-  @container cap-timeline (max-width: 420px) {
-    .cap-timeline__meta {
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .cap-timeline__label {
-      max-width: 100%;
-      font-size: 11.5px;
-    }
+    --cap-p: 0;
+    --cap-arrive: 0;
+    --cap-glow: 0;
+    --cap-solid: clamp(0, calc((var(--cap-arrive) - 0.985) * 80), 1);
   }
 
   /* Preview shell */
   /*
-   * Preview variables (0–1 unless noted). Defaults describe stage 04; [data-stage] rules give the
-   * static view its four frames, and in scroll mode GSAP writes them inline from scroll progress.
+   * Preview variables (0–1 unless noted). Defaults describe stage 04 (the static view); in scroll
+   * mode GSAP writes them inline from scroll progress.
    *   c = colour pass   d = refinement pass (radii, shadows)   line = chart drawn in the design
    *   grid / wfa = wireframe dot grid and labels   uia = design annotations   dev = component tooling
    *   load = loading skeleton   live = live data layer on   n = data count-up (KPIs, bars, chart)
@@ -1332,21 +933,11 @@
     width: 100%;
   }
 
-  /* Static view: four discrete frames. */
-  .cap[data-mode="static"][data-stage="1"] .cap-preview { --cap-c: 0; --cap-d: 0; --cap-line: 0; --cap-grid: 1; --cap-wfa: 1; --cap-live: 0; --cap-range: 0; --cap-ship: 0; }
-  .cap[data-mode="static"][data-stage="2"] .cap-preview { --cap-uia: 1; --cap-live: 0; --cap-range: 0; --cap-ship: 0; }
-  .cap[data-mode="static"][data-stage="3"] .cap-preview { --cap-dev: 1; --cap-ship: 0; }
-
   /*
    * Scroll view: CSS holds the journey's *starting* frame. The scrubbed timeline only ever writes
    * values on top of it, so any value whose interval hasn't begun (including after ScrollTrigger
    * reverts tweens during a refresh) falls back to the correct starting state, never to stage 04.
    */
-  .cap[data-mode="scroll"] {
-    --cap-p: 0;
-    --cap-arrive: 0;
-  }
-
   .cap[data-mode="scroll"] .cap-preview {
     --cap-c: 0;
     --cap-d: 0;
@@ -1365,20 +956,6 @@
   .cap[data-mode="scroll"] [data-cap-build] { --cap-b: 0; }
   .cap[data-mode="scroll"] [data-cap-fx] { --cap-o: 0; }
   .cap[data-mode="scroll"] [data-cap-fx="label"] { --cap-o: 1; }
-
-  .cap[data-mode="static"] .cap-preview {
-    transition:
-      --cap-c 600ms var(--ease-out),
-      --cap-d 700ms var(--ease-out) 120ms,
-      --cap-line 900ms var(--ease-out) 200ms,
-      --cap-grid 500ms var(--ease-out),
-      --cap-wfa 400ms var(--ease-out),
-      --cap-uia 400ms var(--ease-out),
-      --cap-dev 400ms var(--ease-out),
-      --cap-live 300ms var(--ease-out),
-      --cap-range 700ms var(--ease-out),
-      --cap-ship 700ms var(--ease-out);
-  }
 
   /* Launch depth: a soft violet-tinted lift that only exists in stage 04. */
   .cap-preview::before {
@@ -1553,17 +1130,6 @@
     display: grid;
     min-width: 0;
   }
-
-  .cap[data-mode="static"][data-stage="1"] .cap-slot {
-    --cap-t: 0;
-  }
-
-  .cap[data-mode="static"] .cap-slot {
-    transition: --cap-t 760ms var(--ease-out);
-  }
-
-  .cap[data-mode="static"] :is(.cap-kpis, .cap-chart-card, .cap-sources) .cap-slot { transition-delay: 70ms; }
-  .cap[data-mode="static"] .cap-table .cap-slot { transition-delay: 140ms; }
 
   .cap-slot > .cap-slot__wf,
   .cap-slot > .cap-slot__hi {
@@ -2853,19 +2419,6 @@
   }
 
   @media (max-width: 767px) {
-    .cap[data-mode="scroll"] {
-      height: calc(100vh + 170vh);
-      height: calc(100svh + 170vh);
-    }
-
-    .cap {
-      --cap-pad-top: 66px;
-    }
-
-    .cap-guides__size {
-      display: none;
-    }
-
     .cap-browser__bar {
       grid-template-columns: auto minmax(0, 1fr) auto;
     }
@@ -2873,11 +2426,6 @@
     .cap-browser__address {
       min-width: 0;
       font-size: 8.5px;
-    }
-
-    .cap-timeline {
-      padding: 11px 12px 4px;
-      border-radius: 16px;
     }
 
     .cap-phone,
@@ -2892,12 +2440,6 @@
     .cap *::after,
     .cap .cap-preview {
       transition: none !important;
-    }
-  }
-
-  @media (prefers-reduced-transparency: reduce) {
-    .cap-ambient__glow {
-      display: none;
     }
   }
 
@@ -4160,19 +3702,6 @@
   }
 }
 
-/* Capabilities journey: typed so the static (stage-button) mode can transition them. */
-@property --cap-t { syntax: "<number>"; inherits: true; initial-value: 1; }
-@property --cap-c { syntax: "<number>"; inherits: true; initial-value: 1; }
-@property --cap-d { syntax: "<number>"; inherits: true; initial-value: 1; }
-@property --cap-line { syntax: "<number>"; inherits: true; initial-value: 1; }
-@property --cap-grid { syntax: "<number>"; inherits: true; initial-value: 0; }
-@property --cap-wfa { syntax: "<number>"; inherits: true; initial-value: 0; }
-@property --cap-uia { syntax: "<number>"; inherits: true; initial-value: 0; }
-@property --cap-dev { syntax: "<number>"; inherits: true; initial-value: 0; }
-@property --cap-live { syntax: "<number>"; inherits: true; initial-value: 1; }
-@property --cap-n { syntax: "<number>"; inherits: true; initial-value: 1; }
-@property --cap-range { syntax: "<number>"; inherits: true; initial-value: 1; }
-@property --cap-ship { syntax: "<number>"; inherits: true; initial-value: 1; }
-/* Rounded per element, so CSS counters can print scroll-scrubbed numbers. */
+/* Capabilities preview: rounded per element, so CSS counters can print scroll-scrubbed numbers. */
 @property --cap-ca { syntax: "<integer>"; inherits: false; initial-value: 0; }
 @property --cap-cb { syntax: "<integer>"; inherits: false; initial-value: 0; }
