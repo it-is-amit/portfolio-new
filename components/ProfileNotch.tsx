@@ -1,7 +1,6 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { profile } from "@/data/profile";
 import { SocialIcon, type SocialPlatform } from "@/components/ui/social-icon";
 
@@ -95,15 +94,11 @@ export function ProfileNotch() {
           href="#hero"
           aria-label={`${profile.name}, ${profile.hero.roleLabel}`}
         >
-          <Image
-            className="size-8 shrink-0 rounded-full border border-white/80 object-cover"
-            src={profile.avatar}
-            alt=""
-            width={32}
-            height={32}
-            unoptimized
-            referrerPolicy="no-referrer"
-          />
+          {/* An SVG <image>, not <img>: glass buttons scrolling under the notch repaint the HTML below them into
+              WebGL, and a cross-origin <img> without CORS would taint that canvas. The glass never walks into <svg>. */}
+          <svg className="size-8 shrink-0 overflow-hidden rounded-full border border-white/80 bg-[var(--fog)]" aria-hidden="true">
+            <image href={profile.avatar} width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
+          </svg>
           <span className="flex min-w-0 flex-col items-start gap-0.5">
             <strong className="text-[13px] font-bold leading-none tracking-[-0.025em] text-[var(--ultra-violet)] sm:text-[14px]">
               {profile.name}

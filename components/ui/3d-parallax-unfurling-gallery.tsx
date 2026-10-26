@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
-import Image, { type ImageLoader } from "next/image";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { motion, useScroll, useSpring, useTransform } from "motion/react";
 import { usePrefersReducedMotion } from "@/components/ui/shader-canvas-utils/motion";
 import { galleryImages } from "@/data/profile";
@@ -16,24 +15,28 @@ const SLOTS = Array.from({ length: SLOT_COUNT }, (_, index) => ({
   repeat: index >= galleryImages.length,
 }));
 
-/** ImageKit resizes on its CDN (`tr=w-…`), so Next doesn't need its own image optimizer here. */
-const imageKitLoader: ImageLoader = ({ src, width }) => `${src}?tr=w-${width}`;
+/**
+ * Screenshots are SVG <image>s, not <img>: the liquid-glass dock repaints the HTML under it into a WebGL
+ * canvas, and a cross-origin <img> without CORS taints that canvas (texSubImage2D SecurityError, Worker
+ * DataCloneError). The glass never walks into <svg>, so these can't taint it whatever headers the CDN sends.
+ * ImageKit resizes on its CDN (`tr=w-…`).
+ */
+const imageKitUrl = (src: string, width: number) => `${src}?tr=w-${width}`;
 
-function GalleryImage({ slot, image, repeat, light = false, sizes, className = "" }: (typeof SLOTS)[number] & { light?: boolean; sizes: string; className?: string }) {
+function GalleryImage({ slot, image, repeat, light = false, width, className = "" }: (typeof SLOTS)[number] & { light?: boolean; width: number | null; className?: string }) {
   return (
     <figure
       className={`${className} group relative m-0 aspect-video w-full shrink-0 overflow-hidden rounded-[var(--shape-radius-sm)] border transition-transform duration-300 hover:scale-[1.015] motion-reduce:transition-none motion-reduce:hover:scale-100 ${
         light ? "border-[var(--mist)] bg-[var(--fog)]" : "border-[rgba(255,255,255,0.18)] bg-[rgba(255,255,255,0.045)]"
       }`}
     >
-      <Image
-        src={image.src}
-        alt={repeat ? "" : `${image.alt} ${slot}`}
-        loader={imageKitLoader}
-        fill
-        sizes={sizes}
-        className="object-cover object-top"
-      />
+      <svg
+        className="absolute inset-0 size-full"
+        {...(repeat ? { "aria-hidden": true } : { role: "img", "aria-label": `${image.alt} ${slot}` })}
+      >
+        {/* Requested once the gallery is about a screen away (`width` stays null until then). */}
+        {width ? <image href={imageKitUrl(image.src, width)} width="100%" height="100%" preserveAspectRatio="xMidYMin slice" /> : null}
+      </svg>
       <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(173,109,244,0.16),transparent_66%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100 motion-reduce:transition-none" aria-hidden="true" />
     </figure>
   );
@@ -42,6 +45,20 @@ function GalleryImage({ slot, image, repeat, light = false, sizes, className = "
 export default function UnfurlingGallery() {
   const containerRef = useRef<HTMLElement>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
+  // Screenshot width to request; null until the section is within one viewport of the screen.
+  const [imageWidth, setImageWidth] = useState<number | null>(null);
+
+  useEffect(() => {
+    const section = containerRef.current;
+    if (!section || imageWidth) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      setImageWidth(window.innerWidth < 768 ? 640 : prefersReducedMotion ? 1000 : 800);
+      observer.disconnect();
+    }, { rootMargin: "100% 0px" });
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, [imageWidth, prefersReducedMotion]);
 
   useLayoutEffect(() => {
     const section = containerRef.current;
@@ -115,7 +132,7 @@ export default function UnfurlingGallery() {
             <p className="mt-4 max-w-[620px] text-sm leading-relaxed text-[var(--graphite)]">Screens from projects I have designed and built.</p>
           </header>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {SLOTS.map((item) => <GalleryImage key={item.slot} {...item} light sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" />)}
+            {SLOTS.map((item) => <GalleryImage key={item.slot} {...item} light width={imageWidth} />)}
           </div>
         </div>
       </section>
@@ -165,7 +182,7 @@ export default function UnfurlingGallery() {
                       repeat={item.repeat || itemIndex >= column.length / 3}
                       // The third copy only exists to fill the taller wall on phones and tablets.
                       className={itemIndex >= (column.length / 3) * 2 ? "lg:hidden" : ""}
-                      sizes="(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 190px"
+                      width={imageWidth}
                     />
                   ))}
                 </motion.div>
