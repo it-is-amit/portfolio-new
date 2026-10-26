@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { cn } from "./shader-canvas-utils/cn";
 import { usePrefersReducedMotion } from "./shader-canvas-utils/motion";
 
@@ -425,7 +425,8 @@ export function ShaderCanvas({
       data-shader-status={status}
     >
       <div
-        className="pointer-events-none absolute inset-0 rounded-[inherit] bg-[radial-gradient(ellipse_at_55%_100%,var(--lavender-field)_0%,transparent_55%),linear-gradient(135deg,var(--fog),var(--pure-white))]"
+        className="pointer-events-none absolute inset-0 rounded-[inherit] bg-[radial-gradient(ellipse_at_55%_100%,var(--lavender-field)_0%,transparent_55%),linear-gradient(135deg,var(--shader-surface),var(--shader-surface))]"
+        style={{ "--shader-surface": colors.u_surface ?? "var(--fog)" } as CSSProperties}
         aria-hidden="true"
       />
       <canvas

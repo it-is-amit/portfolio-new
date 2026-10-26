@@ -20,7 +20,7 @@ export const profile = {
     linkedin: "https://www.linkedin.com/in/amit-verma-2a46971b4/",
     github: "https://github.com/it-is-amit",
     phone: "tel:+917891672932",
-    resume: "/resume.txt",
+    resume: "https://ik.imagekit.io/g947cuvcp/Amit_Verma_Frontend_Developer.pdf",
   },
   hero: {
     headline: ["Senior", "Frontend Developer"],

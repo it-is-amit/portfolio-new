@@ -127,7 +127,9 @@ export function HeroSection({ introReady }: HeroSectionProps) {
           <div className="mx-auto mt-4 flex w-full max-w-[360px] flex-col justify-center gap-2 sm:mt-6 sm:w-auto sm:max-w-none sm:flex-row" data-hero-enter>
             <GlassButton
               href={profile.links.resume}
-              download
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`${copy.downloadResume} (PDF, opens in a new tab)`}
               variant="primary"
               className="w-full min-h-10 sm:min-h-11 sm:w-auto"
             >
