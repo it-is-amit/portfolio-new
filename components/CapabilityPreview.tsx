@@ -22,7 +22,7 @@ import { capabilityStages } from "@/data/profile";
  * designed skin in one grid cell, and the scroll timeline in ServicesSection wipes between them via
  * `--cap-t`. The frontend stage then wires the UI to "data": values show a loading skeleton and count
  * up (CSS integer counters driven by `--cap-n`), the chart line draws itself, and a cursor switches
- * the chart range — all scrubbed by scroll, so reversing replays it backwards.
+ * the chart range, all scrubbed by scroll, so reversing replays it backwards.
  *
  * Drawn on a 960 × 600 canvas; `--u` (1/960 of the viewport's container width) keeps every
  * measurement proportional, so the mock scales like a real screenshot. Decorative: the figure that

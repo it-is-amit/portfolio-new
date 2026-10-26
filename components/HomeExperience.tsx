@@ -3,7 +3,7 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { ArrowUpRight, Mail, Phone } from "lucide-react";
-import { MotionConfig, motion } from "framer-motion";
+import { MotionConfig, motion } from "motion/react";
 import { ContactSection } from "@/components/ContactSection";
 import { ExperienceStory } from "@/components/ExperienceStory";
 import { JourneySection } from "@/components/JourneySection";
@@ -165,7 +165,6 @@ export function HomeExperience() {
 
                 <div className="site-footer__bottom">
                   <span>{profile.location}</span>
-                  {/* <span>{profile.techSummary}</span> */}
                   <small>{profile.copyright}</small>
                 </div>
               </div>

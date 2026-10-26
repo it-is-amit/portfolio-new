@@ -82,13 +82,13 @@ export function JourneySection() {
 
   return (
     <section className="journey-section" id="journey" ref={sectionRef} aria-labelledby="journey-title">
-      <div className="journey-section__layout">
+      <div className="journey-section__layout max-lg:grid-cols-1 md:max-lg:gap-10">
         <aside className="journey-side">
           <div className="section-marker" aria-hidden="true">
             <span className="section-marker__number">03</span>
             <span>{copy.journey}</span>
           </div>
-          <div className="journey-side__sticky">
+          <div className="journey-side__sticky max-lg:static">
             <div className="journey-side__heading">
               <p className="eyebrow">{copy.journeyCaption}</p>
               <h2
@@ -113,7 +113,7 @@ export function JourneySection() {
           >
             {journey.map((item, index) => (
               <article
-                className="journey-card"
+                className="journey-card max-md:h-auto max-md:min-h-0 md:max-lg:h-[220px] md:max-lg:min-h-[220px]"
                 data-journey-card
                 data-stack-index={index}
                 key={item.id}
@@ -149,7 +149,7 @@ export function JourneySection() {
               </h3>
               <p className="journey-education-card__institution">{education.institution}</p>
               <span className="journey-education-card__dates">
-                {education.dates.replace(" to ", "–")}
+                {education.dates}
               </span>
             </section>
 

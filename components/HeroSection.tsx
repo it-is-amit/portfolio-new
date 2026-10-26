@@ -113,7 +113,7 @@ export function HeroSection({ introReady }: HeroSectionProps) {
             <span>{profile.experienceYears} years of experience</span>
           </AwardBadge>
           <h1
-            className="mx-auto mt-4 max-w-[1100px] text-center text-[clamp(2.5rem,6vw,6.25rem)] font-semibold leading-[0.9] tracking-[-0.085em] text-[var(--midnight-ink)] normal-case sm:mt-6"
+            className="mx-auto mt-4 max-w-[1100px] text-center text-[clamp(2.5rem,6vw,6.25rem)] md:max-lg:text-[clamp(3.5rem,9.5vw,5.75rem)] font-semibold leading-[0.9] tracking-[-0.085em] text-[var(--midnight-ink)] normal-case sm:mt-6"
             id="hero-title"
             ref={titleRef}
             aria-label={profile.hero.headline.join(" ")}
@@ -121,7 +121,7 @@ export function HeroSection({ introReady }: HeroSectionProps) {
             {profile.hero.headline[0]}{" "}
             <span className="text-[var(--ultra-violet)]">{profile.hero.headline[1]}</span>
           </h1>
-          <p className="mx-auto mt-4 max-w-[720px] text-sm font-medium leading-relaxed text-[var(--graphite)] sm:mt-5 sm:text-lg" data-hero-enter>
+          <p className="mx-auto mt-4 max-w-[720px] max-lg:text-balance text-sm font-medium leading-relaxed text-[var(--graphite)] sm:mt-5 sm:text-lg" data-hero-enter>
             {profile.hero.tagline}
           </p>
           <div className="mx-auto mt-4 flex w-full max-w-[360px] flex-col justify-center gap-2 sm:mt-6 sm:w-auto sm:max-w-none sm:flex-row" data-hero-enter>

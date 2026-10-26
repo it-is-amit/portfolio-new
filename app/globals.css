@@ -1,37 +1,10 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-ink: var(--midnight-ink);
-  --color-paper: var(--fog);
-  --color-canvas: var(--fog);
-  --color-violet: var(--voltage-violet);
-  --color-accent: var(--voltage-violet);
-  --color-violet-deep: var(--ultra-violet);
-  --color-lavender: var(--lavender-field);
-  --color-lavender-light: var(--lavender-mist);
-  --color-magenta: var(--magenta-spark);
-  --color-pink: var(--hot-pink-ray);
-  --color-amber: var(--amber-pulse);
-  --color-graphite: var(--graphite);
-  --color-slate: var(--slate);
-  --color-mist: var(--mist);
-  --color-mint: var(--mint-wash);
-  --color-surface: var(--pure-white);
-  --color-danger: var(--hot-pink-ray);
-  --radius-field: var(--shape-radius-lg);
-  --radius-sm: var(--shape-radius-sm);
   --radius-md: var(--shape-radius-md);
-  --radius-lg: var(--shape-radius-lg);
-  --radius-pill: var(--shape-radius-pill);
   --font-sans: var(--font-bricolage);
-  --font-display: var(--font-bricolage);
   --font-mono: var(--font-plex-mono);
-  --text-display: clamp(4.5rem, 12vw, 10.5rem);
-  --text-title: clamp(2.5rem, 6.5vw, 6rem);
   --text-section-heading: clamp(3rem, 7.2vw, 7rem);
-  --text-body: clamp(0.95rem, 1.1vw, 1.08rem);
-  --spacing-section: var(--layout-section-space);
-  --spacing-gutter: var(--layout-page-gutter);
 }
 
 @layer base {
@@ -43,9 +16,7 @@
     --ultra-violet: #5f259e;
     --lavender-mist: #ad6df4;
     --orchid-wash: #bd8ff0;
-    --magenta-spark: #ff5fe4;
     --hot-pink-ray: #e22ba4;
-    --amber-pulse: #dc5f05;
     --champagne-gold: #c4973f;
     --midnight-ink: #111827;
     --graphite: #3f4654;
@@ -53,14 +24,10 @@
     --pure-white: #ffffff;
     --fog: #f1f5f9;
     --mist: #d8e0ea;
-    --mint-wash: #d6fcf4;
     --lavender-field: #ebdafd;
 
     /* Semantic color roles */
     --bg: var(--fog);
-    --bg-raised: var(--pure-white);
-    --bg-soft: var(--lavender-field);
-    --paper: var(--pure-white);
     --text: var(--midnight-ink);
     --muted: var(--slate);
     --muted-strong: var(--graphite);
@@ -68,33 +35,18 @@
     --accent-bright: var(--lavender-field);
     --accent-deep: var(--ultra-violet);
     --accent-ink: var(--midnight-ink);
-    --surface-page: var(--fog);
     --surface-warm: #fbfaf8;
-    --surface-raised: var(--pure-white);
     --surface-soft: var(--lavender-field);
-    --surface-mint: var(--mint-wash);
-    --surface-inverse: var(--midnight-ink);
     --text-primary: var(--midnight-ink);
     --text-secondary: var(--graphite);
     --text-muted: var(--slate);
-    --text-inverse: var(--pure-white);
-    --text-accent: var(--ultra-violet);
-    --line: rgba(17, 24, 39, 0.15);
-    --line-strong: rgba(17, 24, 39, 0.26);
-    --border-subtle: var(--mist);
-    --border-strong: rgba(17, 24, 39, 0.26);
-    --status-positive: var(--mint-wash);
-    --status-alert: var(--amber-pulse);
 
     /* Shape, layout, and elevation */
-    --shape-radius-xs: 0.5rem;
     --shape-radius-sm: 0.875rem;
     --shape-radius-md: 1.25rem;
     --shape-radius-lg: 1.75rem;
     --shape-radius-xl: 2.25rem;
     --shape-radius-pill: 999px;
-    --layout-container-wide: 1480px;
-    --layout-container-copy: 720px;
     /*
      * Hero card's outer gap. Up to laptop sizes this is the original clamp (24–52px); beyond that it
      * grows with the viewport's *smaller* side (vmin), so the gap stays in proportion to the card on
@@ -102,29 +54,11 @@
      * 2560×1440 → 81px; capped at 112px for very large screens.
      */
     --layout-hero-inset: min(max(clamp(24px, 3.8vw, 52px), 5.6vmin), 112px);
-    --layout-page-gutter: clamp(20px, 5vw, 84px);
-    --layout-section-space: clamp(76px, 9vw, 136px);
     --layout-dock-clearance: calc(5.5rem + env(safe-area-inset-bottom));
     --elevation-low: 0 3px 12px rgba(17, 24, 39, 0.07);
     --elevation-medium: 0 12px 32px rgba(17, 24, 39, 0.12);
-    --elevation-high: 0 24px 64px rgba(17, 24, 39, 0.18);
-    --elevation-glass:
-      0 18px 48px rgba(17, 24, 39, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.72);
 
     /* Atmospheric surfaces and glass highlights */
-    --gradient-hero-atmosphere:
-      radial-gradient(
-        ellipse at 78% 20%,
-        rgba(173, 109, 244, 0.24),
-        transparent 42%
-      ),
-      radial-gradient(
-        ellipse at 12% 86%,
-        rgba(214, 252, 244, 0.45),
-        transparent 34%
-      ),
-      linear-gradient(135deg, var(--fog), var(--lavender-field));
     --gradient-lavender-atmosphere:
       radial-gradient(
         ellipse at 92% 12%,
@@ -161,17 +95,10 @@
         transparent 34%
       ),
       linear-gradient(135deg, var(--midnight-ink), var(--midnight-ink));
-    --gradient-glass-sheen: linear-gradient(
-      132deg,
-      rgba(255, 255, 255, 0.48),
-      rgba(214, 252, 244, 0.16) 46%,
-      rgba(189, 143, 240, 0.22)
-    );
 
     --font-bricolage: "Bricolage Grotesque Variable";
     --font-plex-mono: "IBM Plex Mono";
     --font-body: var(--font-bricolage), "Arial", sans-serif;
-    --font-display: var(--font-bricolage), "Arial", sans-serif;
     --font-mono: var(--font-plex-mono), "SFMono-Regular", Consolas, monospace;
     --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   }
@@ -636,7 +563,6 @@
 
   .glass-button {
     --glass-button-color: var(--midnight-ink);
-    --glass-button-background: var(--gradient-glass-sheen);
     --glass-button-background-color: rgba(246, 250, 255, 0.44);
     --glass-button-border: rgba(255, 255, 255, 0.88);
     --glass-button-shadow:
@@ -676,13 +602,6 @@
 
   .glass-button[data-glass-tone="light"][data-glass-variant="primary"] {
     --glass-button-color: var(--ultra-violet);
-    --glass-button-background:
-      linear-gradient(
-        132deg,
-        rgba(134, 47, 231, 0.08),
-        rgba(95, 37, 158, 0.12)
-      ),
-      var(--gradient-glass-sheen);
     --glass-button-background-color: rgba(235, 218, 253, 0.42);
     --glass-button-shadow:
       var(--elevation-low), 0 8px 22px rgba(95, 37, 158, 0.1),
@@ -696,12 +615,6 @@
 
   .glass-button[data-glass-tone="dark"] {
     --glass-button-color: var(--pure-white);
-    --glass-button-background: linear-gradient(
-      132deg,
-      rgba(255, 255, 255, 0.22),
-      rgba(31, 41, 55, 0.54) 46%,
-      rgba(95, 37, 158, 0.48)
-    );
     --glass-button-background-color: rgba(17, 24, 39, 0.48);
     --glass-button-border: rgba(255, 255, 255, 0.5);
     --glass-button-shadow:
@@ -713,12 +626,6 @@
   }
 
   .glass-button[data-glass-tone="dark"][data-glass-variant="secondary"] {
-    --glass-button-background: linear-gradient(
-      132deg,
-      rgba(255, 255, 255, 0.18),
-      rgba(31, 41, 55, 0.58) 48%,
-      rgba(95, 37, 158, 0.32)
-    );
     --glass-button-background-color: rgba(17, 24, 39, 0.42);
   }
 
@@ -865,7 +772,7 @@
   }
 
   /* ------------------------------------------------------------------
-   * Capabilities — centred design-to-code showcase
+   * Capabilities: centred design-to-code showcase
    * Layout, background layers, glows and guides are Tailwind utilities in ServicesSection.tsx.
    * This block holds only what they share: the scroll-driven colour tokens. A scrubbed GSAP
    * timeline writes the --cap-* inputs inline on `.cap`; static mode (reduced motion or short
@@ -1613,7 +1520,7 @@
 
   /*
    * Live values: typed <integer> properties (see @property --cap-ca/--cap-cb) round the scrubbed
-   * product a × n, and CSS counters print it — numbers count with scroll, no JS per frame.
+   * product a × n, and CSS counters print it, so numbers count with scroll, no JS per frame.
    */
   .cap-count {
     --cap-ca: calc(var(--a) * var(--cap-n));
@@ -2634,130 +2541,6 @@
     }
   }
 
-  /* Decorative orbit cluster integrated into the Tools & Tech section. */
-  .tech-orbit__ambient {
-    border-radius: 50%;
-    background:
-      radial-gradient(
-        ellipse at 50% 50%,
-        rgba(34, 211, 238, 0.11),
-        transparent 38%
-      ),
-      radial-gradient(
-        ellipse at 54% 48%,
-        rgba(134, 47, 231, 0.16),
-        transparent 60%
-      ),
-      radial-gradient(
-        ellipse at 82% 18%,
-        rgba(79, 91, 213, 0.12),
-        transparent 38%
-      );
-    filter: blur(18px);
-    opacity: 0.8;
-  }
-
-  .tech-orbit__badge {
-    position: relative;
-    display: grid;
-    width: 46px;
-    height: 46px;
-    place-items: center;
-    border: 1px solid rgba(151, 173, 255, 0.28);
-    border-radius: 50%;
-    background:
-      radial-gradient(
-        circle at 35% 28%,
-        rgba(255, 255, 255, 0.1),
-        transparent 46%
-      ),
-      rgba(5, 13, 30, 0.94);
-    box-shadow:
-      0 0 0 1px rgba(15, 23, 42, 0.75),
-      0 0 14px color-mix(in srgb, var(--orbit-glow) 35%, transparent),
-      inset 0 0 13px rgba(79, 91, 213, 0.12);
-  }
-
-  .tech-orbit__badge img {
-    filter: drop-shadow(
-      0 0 6px color-mix(in srgb, var(--orbit-glow) 48%, transparent)
-    );
-  }
-
-  .tech-orbit__core img {
-    filter: drop-shadow(0 0 9px rgba(97, 218, 251, 0.75));
-  }
-
-  .tech-orbit__static-satellite {
-    position: absolute;
-    z-index: 2;
-    display: grid;
-    transform: translate(-50%, -50%);
-  }
-
-  .tech-orbit__core {
-    transform: translate(-50%, -50%);
-    border: 1px solid rgba(97, 218, 251, 0.72);
-    background:
-      radial-gradient(
-        circle at 34% 27%,
-        rgba(255, 255, 255, 0.2),
-        transparent 37%
-      ),
-      radial-gradient(
-        circle,
-        rgba(41, 103, 185, 0.42),
-        rgba(8, 17, 40, 0.96) 72%
-      );
-    box-shadow:
-      0 0 0 1px rgba(134, 47, 231, 0.32),
-      0 0 22px rgba(97, 218, 251, 0.62),
-      0 0 58px rgba(134, 47, 231, 0.56),
-      inset 0 0 26px rgba(97, 218, 251, 0.22);
-  }
-
-  .tech-orbit__core-halo {
-    z-index: 0;
-    background: radial-gradient(
-      circle,
-      rgba(134, 47, 231, 0.42),
-      rgba(97, 218, 251, 0.14) 42%,
-      transparent 72%
-    );
-    filter: blur(12px);
-  }
-
-  .tech-orbit__fallback {
-    display: none;
-  }
-
-  @supports not (offset-path: path("M 0 0 L 1 1")) {
-    .tech-orbit__moving {
-      display: none;
-    }
-
-    .tech-orbit__fallback {
-      display: block;
-    }
-  }
-
-  @media (max-width: 767px) {
-    .tech-orbit__badge {
-      width: 40px;
-      height: 40px;
-    }
-
-    .tech-orbit__core {
-      width: 64px;
-      height: 64px;
-    }
-
-    .tech-orbit__core img {
-      width: 40px;
-      height: 40px;
-    }
-  }
-
   /* Shared layout language. */
 
   .eyebrow {
@@ -2890,7 +2673,6 @@
     --journey-text: var(--text-primary);
     --journey-muted: var(--text-muted);
     --journey-muted-strong: var(--text-secondary);
-    --journey-line: var(--line);
     --journey-sticky-top: clamp(78px, 10vh, 108px);
     --journey-card-step: 16px;
     --journey-timeline-gap: clamp(28px, 3.4vh, 36px);

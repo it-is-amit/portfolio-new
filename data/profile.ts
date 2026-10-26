@@ -1,6 +1,5 @@
 export const profile = {
   name: "Amit Verma",
-  displayName: "AMIT VERMA",
   title: "Senior Frontend Developer",
   phone: "+91 78916 72932",
   avatar: "https://media.licdn.com/dms/image/v2/D5603AQHkQ_1csElxbg/profile-displayphoto-crop_800_800/B56aFFzbtlHQAI-/0/1792172476100?e=1794441600&v=beta&t=XL4yICAd8t95Vr_PTmDKX3JOT_2mbDBhgHJ8o5peD9Y",
@@ -10,10 +9,10 @@ export const profile = {
   userScale: "5K–50K+",
   techSummary: "React / Next.js / TypeScript",
   seo: {
-    title: "Amit Verma — Senior Frontend Developer",
+    title: "Amit Verma | Senior Frontend Developer",
     description:
       "Senior frontend developer with 5 years of experience building dashboards, platforms, and websites for products used by 5K to 50K+ people.",
-    imageAlt: "Amit Verma — Senior Frontend Developer (React, Next.js, TypeScript)",
+    imageAlt: "Amit Verma, Senior Frontend Developer (React, Next.js, TypeScript)",
   },
   links: {
     instagram: "https://www.instagram.com/it_is_amit",
@@ -26,27 +25,15 @@ export const profile = {
     headline: ["Senior", "Frontend Developer"],
     roleLabel: "Senior Frontend Developer",
     portfolioLabel: "PORTFOLIO 2026",
-    tagline: "Amit Verma’s portfolio — polished React and Next.js experiences, built to perform.",
-    intro: "Senior Frontend Developer · React, Next.js, TypeScript.",
-    scrollBadge: "SCROLL TO EXPLORE",
-    marquee: "REACT · NEXT.JS · TYPESCRIPT · SEO · PERFORMANCE · UI/UX ·",
+    tagline: "Amit Verma’s portfolio of polished React and Next.js experiences, built to perform.",
   },
-  about: {
-    statement: "I design the experience, then build it.",
-    supporting:
-      "I started as a UI/UX designer, then moved into frontend development. That design background is why my interfaces feel polished, and why I can work closely with designers and backend teams.",
-  },
-  roleInterest:
-    "Open to senior frontend and React / Next.js roles at product companies across India and remote.",
   copyright: "© 2026 Amit Verma",
 } as const;
 
 export const copy = {
   skipToContent: "Skip to main content",
-  siteFooter: "Site footer",
   journeyIntro: "I started in UI/UX design, which shapes how I build interfaces today.",
   journey: "Journey",
-  scroll: "Scroll to explore",
   backToTop: "Back to top",
   preloaderLabel: "Senior Frontend Developer · UI/UX Designer",
   /** Capabilities heading, in two parts: the second renders in the accent colour. */
@@ -54,7 +41,6 @@ export const copy = {
   servicesTitleAccent: "Engineering Products.",
   /** One line: kept short enough to never wrap (see .cap-head__subtitle). */
   servicesSubtitle: "From UX design to production-ready React and Next.js.",
-  contact: "Contact",
   journeyCaption: "From designer to frontend developer",
   journeyTitle: "Journey",
   journeyEducation: "Education",
@@ -77,11 +63,11 @@ export const navigation = [
 export const capabilityStages = [
   {
     id: "wireframe",
-    tool: "Figma — Pulse / Wireframe",
+    tool: "Figma · Pulse / Wireframe",
   },
   {
     id: "visual-design",
-    tool: "Figma — Pulse / UI",
+    tool: "Figma · Pulse / UI",
   },
   {
     id: "frontend-build",
@@ -99,7 +85,7 @@ export const journey = [
   {
     id: "kriscent-frontend",
     year: "2024",
-    period: "Jul 2024 — Present",
+    period: "Jul 2024 - Present",
     role: "Frontend Developer",
     company: "Kriscent Techno Hub, Kota",
     description:
@@ -108,7 +94,7 @@ export const journey = [
   {
     id: "vysion-frontend",
     year: "2022",
-    period: "May 2022 — May 2024",
+    period: "May 2022 - May 2024",
     role: "Frontend Developer",
     company: "Vysion Technology",
     description:
@@ -117,7 +103,7 @@ export const journey = [
   {
     id: "vysion-designer",
     year: "2021",
-    period: "Jun 2021 — Apr 2022",
+    period: "Jun 2021 - Apr 2022",
     role: "UI/UX Designer",
     company: "Vysion Technology",
     description:
@@ -126,7 +112,7 @@ export const journey = [
   {
     id: "safal-intern",
     year: "2021",
-    period: "Jan 2021 — May 2021",
+    period: "Jan 2021 - May 2021",
     role: "UI/UX Design Intern",
     company: "Safal Infotech Pvt. Ltd.",
     description:
@@ -137,7 +123,7 @@ export const journey = [
 export const education = {
   qualification: "B.Tech in Computer Science and Engineering",
   institution: "IIIT Surat",
-  dates: "2017 — 2021",
+  dates: "2017 - 2021",
 } as const;
 
 export const awards = [
@@ -173,4 +159,13 @@ export const stackGroups = [
   },
 ] as const;
 
-export type StackGroup = (typeof stackGroups)[number];
+/** Selected work screenshots (ImageKit). The gallery repeats these until more are added. */
+export const galleryImages = [
+  { src: "https://ik.imagekit.io/g947cuvcp/portfolio/Screenshot%20(10).webp", alt: "Project screenshot" },
+  { src: "https://ik.imagekit.io/g947cuvcp/portfolio/Screenshot%20(9).webp", alt: "Project screenshot" },
+  { src: "https://ik.imagekit.io/g947cuvcp/portfolio/Screenshot%20(14).webp", alt: "Project screenshot" },
+  { src: "https://ik.imagekit.io/g947cuvcp/portfolio/Screenshot%20(13).webp", alt: "Project screenshot" },
+  { src: "https://ik.imagekit.io/g947cuvcp/portfolio/Screenshot%20(8).webp", alt: "Project screenshot" },
+  { src: "https://ik.imagekit.io/g947cuvcp/portfolio/Screenshot%20(12).webp", alt: "Project screenshot" },
+  { src: "https://ik.imagekit.io/g947cuvcp/portfolio/Screenshot%20(11).webp", alt: "Project screenshot" },
+] as const;

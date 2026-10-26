@@ -340,7 +340,7 @@ export function ServicesSection() {
           >
             <header className="grid max-w-[1000px] justify-items-center gap-[clamp(10px,1.6vh,16px)] text-center" data-cap-part="head">
               <h2
-                className="m-0 text-[clamp(2rem,min(3.7vw,6.6vh),4.25rem)] leading-[0.98] font-semibold tracking-[-0.065em] text-[var(--cap-ink)]"
+                className="m-0 text-[clamp(2rem,min(3.7vw,6.6vh),4.25rem)] md:max-lg:text-[clamp(2rem,6vw,3.5rem)] leading-[0.98] font-semibold tracking-[-0.065em] text-[var(--cap-ink)]"
                 id="services-title"
                 data-section-heading
               >
