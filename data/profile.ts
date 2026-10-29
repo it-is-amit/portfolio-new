@@ -168,4 +168,7 @@ export const galleryImages = [
   { src: "https://ik.imagekit.io/g947cuvcp/portfolio/Screenshot%20(8).webp", alt: "Project screenshot" },
   { src: "https://ik.imagekit.io/g947cuvcp/portfolio/Screenshot%20(12).webp", alt: "Project screenshot" },
   { src: "https://ik.imagekit.io/g947cuvcp/portfolio/Screenshot%20(11).webp", alt: "Project screenshot" },
+  { src: "https://ik.imagekit.io/g947cuvcp/portfolio/Screenshot%202026-10-29%20230828.webp", alt: "Project screenshot" },
+  { src: "https://ik.imagekit.io/g947cuvcp/portfolio/Screenshot%202026-10-29%20231452.webp", alt: "Project screenshot" },
+  { src: "https://ik.imagekit.io/g947cuvcp/portfolio/Screenshot%202026-10-29%20231053.webp", alt: "Project screenshot" },
 ] as const;
