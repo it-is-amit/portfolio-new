@@ -135,7 +135,19 @@ export function JourneySection() {
           </div>
 
           <aside className="journey-credentials" aria-label="Education and recognition">
-            <section className="journey-education-card" aria-labelledby="education-title">
+            {/* Same metallic plate as the award cards (tilt, glare, prismatic foil), in the card's own violet. */}
+            <AwardBadge
+              as="section"
+              tone="violet"
+              tilt={0.6}
+              className="journey-education-card [--award-glow:var(--lavender-mist)] [--award-pointer-x:50%] [--award-pointer-y:50%] [--award-tilt-x:0deg] [--award-tilt-y:0deg] [--award-glare-opacity:0.42] [--award-lift:0px] [transform:perspective(1100px)_rotateX(var(--award-tilt-x))_rotateY(var(--award-tilt-y))_translateY(var(--award-lift))] [transform-style:preserve-3d] transition-[transform,box-shadow,border-color] duration-[240ms] ease-[var(--ease-out)] motion-safe:hover:[--award-lift:-3px] motion-safe:hover:border-[color-mix(in_srgb,var(--lavender-mist)_70%,white)] motion-safe:hover:will-change-transform"
+              aria-labelledby="education-title"
+            >
+              {/* Polished-metal sheen, as on the award cards. */}
+              <span
+                className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] bg-[radial-gradient(ellipse_at_95%_0%,rgba(255,255,255,0.3),transparent_56%),linear-gradient(120deg,rgba(255,255,255,0.22),transparent_42%)] opacity-90 mix-blend-soft-light [@media(prefers-reduced-transparency:reduce)]:hidden"
+                aria-hidden="true"
+              />
               <div className="journey-education-card__topline">
                 <span>{copy.journeyEducation}</span>
                 <span className="journey-education-card__icon">
@@ -151,7 +163,7 @@ export function JourneySection() {
               <span className="journey-education-card__dates">
                 {education.dates}
               </span>
-            </section>
+            </AwardBadge>
 
             <div className="journey-awards-grid" role="list" aria-label={copy.recognition}>
               {awards.map((award, index) => {

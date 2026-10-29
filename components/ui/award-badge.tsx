@@ -17,8 +17,8 @@ type AwardBadgeProps = Omit<
   children: ReactNode;
   className: string;
   tone: AwardTone;
-  /** Element to render. Defaults to `article` (Journey cards); small chips can use `div`. */
-  as?: "article" | "div";
+  /** Element to render. Defaults to `article` (Journey award cards); the education card uses `section`, small chips `div`. */
+  as?: "article" | "section" | "div";
   /** Tilt multiplier: 1 for cards, lower for small elements where full tilt would look exaggerated. */
   tilt?: number;
 };
@@ -38,7 +38,7 @@ function resetCardStyle(card: HTMLElement) {
 
 /**
  * Metallic plate: pointer-driven tilt, prismatic foil, and a moving specular glare.
- * Used by the Journey award cards and the Hero experience chip. Mouse only, so touch devices
+ * Used by the Journey award + education cards and the Hero experience chip. Mouse only, so touch devices
  * keep the static plate; disabled under reduced motion.
  */
 export function AwardBadge({
