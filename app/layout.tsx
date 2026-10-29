@@ -5,6 +5,7 @@ import "@fontsource/ibm-plex-mono/latin-500.css";
 import "@fontsource/ibm-plex-mono/latin-600.css";
 import { profile } from "@/data/profile";
 import { getRequestSiteUrl } from "@/lib/site-url";
+import { preloaderBootScript } from "@/lib/preloader-boot";
 import "./globals.css";
 
 const siteName = `${profile.name} | Portfolio`;
@@ -71,7 +72,12 @@ const scrollbarClassName = [
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={scrollbarClassName}>
+    // suppressHydrationWarning: the inline preloader script sets `data-preloader` on <html> before hydration.
+    <html lang="en" className={scrollbarClassName} suppressHydrationWarning>
+      <head>
+        {/* Runs before the first paint so the intro loader shows from the very first frame. */}
+        <script dangerouslySetInnerHTML={{ __html: preloaderBootScript }} />
+      </head>
       <body>{children}</body>
     </html>
   );

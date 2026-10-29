@@ -80,7 +80,7 @@ export function HomeExperience() {
   const [introReady, setIntroReady] = useState(false);
   const reducedMotion = usePrefersReducedMotion();
   const footerRef = useRef<HTMLElement>(null);
-  const handleIntroComplete = useCallback(() => setIntroReady(true), []);
+  const handleIntroReveal = useCallback(() => setIntroReady(true), []);
 
   useLayoutEffect(() => {
     const footer = footerRef.current;
@@ -101,7 +101,7 @@ export function HomeExperience() {
         <div className="portfolio-shell">
           <a className="skip-link" href="#main-content">{copy.skipToContent}</a>
           <ProfileNotch />
-          <Preloader onComplete={handleIntroComplete} />
+          <Preloader onReveal={handleIntroReveal} />
           <main id="main-content" className="portfolio-main">
             <ExperienceStory introReady={introReady} />
             <ServicesSection />
