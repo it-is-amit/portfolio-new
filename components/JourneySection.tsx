@@ -11,7 +11,7 @@ const CARD_STACK_STEP = 16;
 
 export function JourneySection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const stackRef = useRef<HTMLDivElement>(null);
+  const stackRef = useRef<HTMLOListElement>(null);
   const reducedMotion = usePrefersReducedMotion();
 
   useLayoutEffect(() => {
@@ -82,13 +82,13 @@ export function JourneySection() {
 
   return (
     <section className="journey-section" id="journey" ref={sectionRef} aria-labelledby="journey-title">
-      <div className="journey-section__layout">
+      <div className="journey-section__layout max-lg:grid-cols-1 md:max-lg:gap-10">
         <aside className="journey-side">
           <div className="section-marker" aria-hidden="true">
             <span className="section-marker__number">03</span>
             <span>{copy.journey}</span>
           </div>
-          <div className="journey-side__sticky">
+          <div className="journey-side__sticky max-lg:static">
             <div className="journey-side__heading">
               <p className="eyebrow">{copy.journeyCaption}</p>
               <h2
@@ -104,20 +104,18 @@ export function JourneySection() {
         </aside>
 
         <div className="journey-main flex min-w-0 flex-col gap-7">
-          <div
+          <ol
             className="journey-card-stack"
             data-journey-card-stack
             ref={stackRef}
-            role="list"
             aria-label={copy.journey}
           >
             {journey.map((item, index) => (
-              <article
-                className="journey-card"
+              <li
+                className="journey-card max-md:h-auto max-md:min-h-0 md:max-lg:h-[220px] md:max-lg:min-h-[220px]"
                 data-journey-card
                 data-stack-index={index}
                 key={item.id}
-                role="listitem"
                 aria-labelledby={`journey-${item.id}`}
               >
                 <span className="journey-card__connector" aria-hidden="true" />
@@ -130,12 +128,24 @@ export function JourneySection() {
                   <p className="journey-card__company">{item.company}</p>
                   <p className="journey-card__description">{item.description}</p>
                 </div>
-              </article>
+              </li>
             ))}
-          </div>
+          </ol>
 
           <aside className="journey-credentials" aria-label="Education and recognition">
-            <section className="journey-education-card" aria-labelledby="education-title">
+            {/* Same metallic plate as the award cards (tilt, glare, prismatic foil), in the card's own violet. */}
+            <AwardBadge
+              as="section"
+              tone="violet"
+              tilt={0.6}
+              className="journey-education-card [--award-glow:var(--lavender-mist)] [--award-pointer-x:50%] [--award-pointer-y:50%] [--award-tilt-x:0deg] [--award-tilt-y:0deg] [--award-glare-opacity:0.42] [--award-lift:0px] [transform:perspective(1100px)_rotateX(var(--award-tilt-x))_rotateY(var(--award-tilt-y))_translateY(var(--award-lift))] [transform-style:preserve-3d] transition-[transform,box-shadow,border-color] duration-[240ms] ease-[var(--ease-out)] motion-safe:hover:[--award-lift:-3px] motion-safe:hover:border-[color-mix(in_srgb,var(--lavender-mist)_70%,white)] motion-safe:hover:will-change-transform"
+              aria-labelledby="education-title"
+            >
+              {/* Polished-metal sheen, as on the award cards. */}
+              <span
+                className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] bg-[radial-gradient(ellipse_at_95%_0%,rgba(255,255,255,0.3),transparent_56%),linear-gradient(120deg,rgba(255,255,255,0.22),transparent_42%)] opacity-90 mix-blend-soft-light [@media(prefers-reduced-transparency:reduce)]:hidden"
+                aria-hidden="true"
+              />
               <div className="journey-education-card__topline">
                 <span>{copy.journeyEducation}</span>
                 <span className="journey-education-card__icon">
@@ -149,19 +159,19 @@ export function JourneySection() {
               </h3>
               <p className="journey-education-card__institution">{education.institution}</p>
               <span className="journey-education-card__dates">
-                {education.dates.replace(" to ", "–")}
+                {education.dates}
               </span>
-            </section>
+            </AwardBadge>
 
-            <div className="journey-awards-grid" role="list" aria-label={copy.recognition}>
+            <ul className="journey-awards-grid" aria-label={copy.recognition}>
               {awards.map((award, index) => {
                 const AwardIcon = index === 0 ? Award : Star;
                 return (
                   <AwardBadge
+                    as="li"
                     className="journey-award-card"
                     tone={index === 0 ? "gold" : "violet"}
                     key={award.title}
-                    role="listitem"
                     aria-labelledby={`journey-award-${index}`}
                   >
                     <span className="journey-award-card__icon">
@@ -176,7 +186,7 @@ export function JourneySection() {
                   </AwardBadge>
                 );
               })}
-            </div>
+            </ul>
           </aside>
         </div>
       </div>

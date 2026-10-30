@@ -1,8 +1,8 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
-import type { PointerEvent as ReactPointerEvent } from "react";
 import { ArrowDownRight, Download, Star } from "lucide-react";
+import { AwardBadge } from "@/components/ui/award-badge";
 import { GlassButton } from "@/components/ui/glass-button";
 import { copy, profile } from "@/data/profile";
 import { usePrefersReducedMotion } from "@/components/ui/shader-canvas-utils/motion";
@@ -17,15 +17,6 @@ export function HeroSection({ introReady }: HeroSectionProps) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const reducedMotion = usePrefersReducedMotion();
 
-  const handleExperienceChipPointerMove = (
-    event: ReactPointerEvent<HTMLDivElement>,
-  ) => {
-    if (reducedMotion || event.pointerType === "touch") return;
-    const bounds = event.currentTarget.getBoundingClientRect();
-    event.currentTarget.style.setProperty("--mx", `${event.clientX - bounds.left}px`);
-    event.currentTarget.style.setProperty("--my", `${event.clientY - bounds.top}px`);
-  };
-
   useLayoutEffect(() => {
     const section = sectionRef.current;
     const title = titleRef.current;
@@ -33,6 +24,7 @@ export function HeroSection({ introReady }: HeroSectionProps) {
     const heroStage = section.closest<HTMLElement>("[data-hero-stage]") ?? section;
 
     registerGsapPlugins();
+    let shaderCanvas: HTMLCanvasElement | null = null;
     const context = gsap.context(() => {
       const mobile = window.matchMedia("(max-width: 767px)").matches;
       const enterElements = section.querySelectorAll<HTMLElement>("[data-hero-enter]");
@@ -61,42 +53,43 @@ export function HeroSection({ introReady }: HeroSectionProps) {
         "-=0.4",
       );
 
+      // Exit: while the stage is sticky, the card shrinks, drifts up slightly, blurs and fades,
+      // scrubbed by scroll (with light smoothing) so it finishes as the next section reaches the
+      // top. The fade completes a little before the end, so the incoming section's soft edge only
+      // ever overlaps a faint, softened card. The WebGL background is frozen while the card is
+      // blurred: a live shader under a CSS blur is the most expensive thing on the page.
       const heroCard = heroStage.querySelector<HTMLElement>("[data-hero-card]");
+      const runway = heroStage.closest<HTMLElement>("[data-hero-runway]") ?? heroStage;
       if (heroCard) {
-        gsap.set(heroCard, {
-          filter: "blur(0px)",
-          transformOrigin: "50% 50%",
-          willChange: "transform, filter, opacity",
-        });
-
+        const shader = heroCard.querySelector<HTMLCanvasElement>("canvas");
+        gsap.set(heroCard, { transformOrigin: "50% 50%", willChange: "transform, filter, opacity" });
         gsap.timeline({
+          defaults: { ease: "none" },
           scrollTrigger: {
-            trigger: heroStage,
+            trigger: runway,
             start: "top top",
-            end: "bottom top",
-            scrub: 0.55,
+            end: () => `+=${heroStage.offsetHeight}`,
+            scrub: 0.5,
             invalidateOnRefresh: true,
+            onUpdate: (self) => {
+              if (!shader) return;
+              const paused = self.progress > 0.04;
+              if ((shader.dataset.paused === "true") !== paused) shader.dataset.paused = String(paused);
+            },
           },
         })
-          .to(heroCard, {
-            scale: mobile ? 1.04 : 1.08,
-            filter: "blur(1px)",
-            autoAlpha: 1,
-            ease: "none",
-            duration: 0.35,
-          })
-          .to(heroCard, {
-            scale: mobile ? 1.2 : 1.3,
-            filter: mobile ? "blur(10px)" : "blur(14px)",
-            autoAlpha: 0,
-            ease: "none",
-            duration: 0.65,
-          });
+          .fromTo(heroCard, { scale: 1, yPercent: 0 }, { scale: mobile ? 0.86 : 0.8, yPercent: mobile ? -4 : -7, duration: 1, ease: "power1.out" }, 0)
+          .fromTo(heroCard, { filter: "blur(0px)" }, { filter: mobile ? "blur(8px)" : "blur(10px)", duration: 0.8, ease: "power1.in" }, 0)
+          .fromTo(heroCard, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.62, ease: "power1.in" }, 0.08);
+        shaderCanvas = shader;
       }
 
     }, section);
 
-    return () => context.revert();
+    return () => {
+      context.revert();
+      if (shaderCanvas) delete shaderCanvas.dataset.paused;
+    };
   }, [introReady, reducedMotion]);
 
   return (
@@ -108,16 +101,19 @@ export function HeroSection({ introReady }: HeroSectionProps) {
     >
       <div className="grid h-full min-h-0 place-items-center pt-[76px] pb-[76px] sm:pt-[88px] sm:pb-[88px]">
         <div className="w-full max-w-[1020px] text-center">
-          <div
+          {/* Same metallic plate as the Journey award cards (gold tone), with tilt scaled for a chip. */}
+          <AwardBadge
+            as="div"
+            tone="gold"
+            tilt={0.55}
             className="hero-experience-chip mx-auto inline-flex min-h-10 items-center justify-center gap-2 rounded-full px-4 py-2 text-[12px] font-semibold tracking-[0.02em] text-[var(--midnight-ink)]"
             data-hero-enter
-            onPointerMove={handleExperienceChipPointerMove}
           >
             <Star className="size-3.5 shrink-0 text-[#74490d]" fill="currentColor" strokeWidth={1.8} aria-hidden="true" />
             <span>{profile.experienceYears} years of experience</span>
-          </div>
+          </AwardBadge>
           <h1
-            className="mx-auto mt-4 max-w-[1100px] text-center text-[clamp(2.5rem,6vw,6.25rem)] font-semibold leading-[0.9] tracking-[-0.085em] text-[var(--midnight-ink)] normal-case sm:mt-6"
+            className="mx-auto mt-4 max-w-[1100px] text-center text-[clamp(2.5rem,6vw,6.25rem)] md:max-lg:text-[clamp(3.5rem,9.5vw,5.75rem)] font-semibold leading-[0.9] tracking-[-0.085em] text-[var(--midnight-ink)] normal-case sm:mt-6"
             id="hero-title"
             ref={titleRef}
             aria-label={profile.hero.headline.join(" ")}
@@ -125,13 +121,15 @@ export function HeroSection({ introReady }: HeroSectionProps) {
             {profile.hero.headline[0]}{" "}
             <span className="text-[var(--ultra-violet)]">{profile.hero.headline[1]}</span>
           </h1>
-          <p className="mx-auto mt-4 max-w-[720px] text-sm font-medium leading-relaxed text-[var(--graphite)] sm:mt-5 sm:text-lg" data-hero-enter>
+          <p className="mx-auto mt-4 max-w-[720px] max-lg:text-balance text-sm font-medium leading-relaxed text-[var(--graphite)] sm:mt-5 sm:text-lg" data-hero-enter>
             {profile.hero.tagline}
           </p>
           <div className="mx-auto mt-4 flex w-full max-w-[360px] flex-col justify-center gap-2 sm:mt-6 sm:w-auto sm:max-w-none sm:flex-row" data-hero-enter>
             <GlassButton
               href={profile.links.resume}
-              download
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`${copy.downloadResume} (PDF, opens in a new tab)`}
               variant="primary"
               className="w-full min-h-10 sm:min-h-11 sm:w-auto"
             >

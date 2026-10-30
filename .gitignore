@@ -40,3 +40,7 @@ Thumbs.db
 # TypeScript / Build Cache
 tsconfig.tsbuildinfo
 .eslintcache
+
+# Local tool/sandbox state
+.config/
+.sudo_as_admin_successful

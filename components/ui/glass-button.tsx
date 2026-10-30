@@ -29,7 +29,7 @@ type GlassButtonNativeProps = Omit<
   keyof GlassButtonBaseProps
 >;
 
-export type GlassButtonProps = GlassButtonBaseProps &
+type GlassButtonProps = GlassButtonBaseProps &
   (GlassButtonLinkProps | GlassButtonNativeProps);
 
 // body / absorption lowered so a slightly-off backdrop capture can't turn the button gray.
@@ -176,5 +176,3 @@ export function GlassButton({
     </button>
   );
 }
-
-export default GlassButton;

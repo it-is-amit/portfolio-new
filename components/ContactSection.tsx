@@ -68,7 +68,9 @@ export function ContactSection() {
             <GlassButton
               className="group"
               href={profile.links.resume}
-              download
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`${copy.downloadResume} (PDF, opens in a new tab)`}
               size="compact"
               variant="secondary"
             >

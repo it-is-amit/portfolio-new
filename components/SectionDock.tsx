@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { MouseEvent } from "react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Home, Images, Mail, PanelsTopLeft, Route, Sparkles } from "lucide-react";
 import type { LiquidGlass as LiquidGlassSurface, LiquidGlassMaterial } from "apple-liquid-glass-webgl";
 import { navigation } from "@/data/profile";
@@ -133,7 +133,21 @@ export function SectionDock() {
         const x = box.left + box.width / 2;
         const y = box.top + box.height / 2;
         const backdropElement = document.elementsFromPoint(x, y).find((element) => !dock.contains(element));
-        const darkSurface = Boolean(backdropElement?.closest(".section-skills, .section-gallery__stage, .site-footer"));
+        const darkSelector = ".section-skills, .section-gallery__stage, .site-footer, .cap[data-tone='dark']";
+        const darkSurface = Boolean(backdropElement?.closest(darkSelector));
+        // The site scrollbar (see scrollbarClassName in app/layout.tsx) matches the surface beside it, mid-screen.
+        const besideScrollbar = document.elementFromPoint(window.innerWidth - 24, window.innerHeight / 2);
+        const scrollTone = besideScrollbar?.closest(darkSelector) ? "dark" : "light";
+        const root = document.documentElement;
+        if (root.dataset.scrollTone !== scrollTone) {
+          root.dataset.scrollTone = scrollTone;
+          // Chromium doesn't restyle the page's ::-webkit-scrollbar when <html> attributes change; a
+          // same-frame overflow toggle rebuilds it (no visible change: it's restored before paint).
+          const overflow = root.style.overflowY;
+          root.style.overflowY = "hidden";
+          void root.offsetWidth;
+          root.style.overflowY = overflow;
+        }
         const selectedWorkIsActive = galleryHasDarkStage && nextActive === "gallery";
         const atLightHeroTop = nextActive === "hero" && window.scrollY <= 1;
         const showHeroDockBackdrop = nextActive === "hero";

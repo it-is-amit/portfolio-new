@@ -1,37 +1,64 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef } from "react";
-import { motion, useScroll, useSpring, useTransform } from "framer-motion";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { motion, useScroll, useSpring, useTransform } from "motion/react";
 import { usePrefersReducedMotion } from "@/components/ui/shader-canvas-utils/motion";
+import { galleryImages } from "@/data/profile";
 import { gsap, registerGsapPlugins, revealSectionHeading } from "@/lib/gsap-client";
 
-const PLACEHOLDER_IDS = Array.from({ length: 16 }, (_, index) => index + 1);
+const SLOT_COUNT = 16;
+/** 16 slots; the available screenshots repeat in order until more are added to `galleryImages`. */
+const SLOTS = Array.from({ length: SLOT_COUNT }, (_, index) => ({
+  slot: index + 1,
+  image: galleryImages[index % galleryImages.length],
+  /** Repeats (and the scroll loop's duplicate columns) are decorative, so each screenshot is announced once. */
+  repeat: index >= galleryImages.length,
+}));
 
-function ImagePlaceholder({ index, light = false }: { index: number; light?: boolean }) {
-  const label = String(index).padStart(2, "0");
+/**
+ * Screenshots are SVG <image>s, not <img>: the liquid-glass dock repaints the HTML under it into a WebGL
+ * canvas, and a cross-origin <img> without CORS taints that canvas (texSubImage2D SecurityError, Worker
+ * DataCloneError). The glass never walks into <svg>, so these can't taint it whatever headers the CDN sends.
+ * ImageKit resizes on its CDN (`tr=w-…`).
+ */
+const imageKitUrl = (src: string, width: number) => `${src}?tr=w-${width}`;
 
+function GalleryImage({ slot, image, repeat, light = false, width, className = "" }: (typeof SLOTS)[number] & { light?: boolean; width: number | null; className?: string }) {
   return (
-    <div
-      className={`group relative aspect-video w-full shrink-0 overflow-hidden rounded-[var(--shape-radius-sm)] border transition-transform duration-300 hover:scale-[1.015] motion-reduce:transition-none motion-reduce:hover:scale-100 ${
-        light
-          ? "border-[var(--mist)] bg-[rgba(255,255,255,0.82)] text-[var(--slate)]"
-          : "border-[rgba(255,255,255,0.18)] bg-[rgba(255,255,255,0.045)] text-[rgba(241,245,249,0.68)]"
+    <figure
+      className={`${className} group relative m-0 aspect-video w-full shrink-0 overflow-hidden rounded-[var(--shape-radius-sm)] border transition-transform duration-300 hover:scale-[1.015] motion-reduce:transition-none motion-reduce:hover:scale-100 ${
+        light ? "border-[var(--mist)] bg-[var(--fog)]" : "border-[rgba(255,255,255,0.18)] bg-[rgba(255,255,255,0.045)]"
       }`}
-      role="img"
-      aria-label={`Project image placeholder ${label}, 16 by 9`}
     >
-      <span className="pointer-events-none absolute inset-3 rounded-[0.625rem] border border-dashed border-current opacity-30" aria-hidden="true" />
-      <span className="absolute inset-0 grid place-items-center font-mono text-[8px] uppercase tracking-[0.14em] sm:text-[9px]">
-        Image placeholder <span className="ml-2 opacity-70">/{label}</span>
-      </span>
-      <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(173,109,244,0.12),transparent_66%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100 motion-reduce:transition-none" aria-hidden="true" />
-    </div>
+      <svg
+        className="absolute inset-0 size-full"
+        {...(repeat ? { "aria-hidden": true } : { role: "img", "aria-label": `${image.alt} ${slot}` })}
+      >
+        {/* Requested once the gallery is about a screen away (`width` stays null until then). */}
+        {width ? <image href={imageKitUrl(image.src, width)} width="100%" height="100%" preserveAspectRatio="xMidYMin slice" /> : null}
+      </svg>
+      <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(173,109,244,0.16),transparent_66%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100 motion-reduce:transition-none" aria-hidden="true" />
+    </figure>
   );
 }
 
 export default function UnfurlingGallery() {
   const containerRef = useRef<HTMLElement>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
+  // Screenshot width to request; null until the section is within one viewport of the screen.
+  const [imageWidth, setImageWidth] = useState<number | null>(null);
+
+  useEffect(() => {
+    const section = containerRef.current;
+    if (!section || imageWidth) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      setImageWidth(window.innerWidth < 768 ? 640 : prefersReducedMotion ? 1000 : 800);
+      observer.disconnect();
+    }, { rootMargin: "100% 0px" });
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, [imageWidth, prefersReducedMotion]);
 
   useLayoutEffect(() => {
     const section = containerRef.current;
@@ -59,8 +86,8 @@ export default function UnfurlingGallery() {
 
   const columns = useMemo(() => {
     return [0, 1, 2, 3].map((columnIndex) => {
-      const column = PLACEHOLDER_IDS.filter((_, index) => index % 4 === columnIndex);
-      return [...column, ...column];
+      const column = SLOTS.filter((_, index) => index % 4 === columnIndex);
+      return [...column, ...column, ...column];
     });
   }, []);
 
@@ -74,9 +101,24 @@ export default function UnfurlingGallery() {
   const rotateZ = useTransform(progress, [0.16, 1], [12, 1]);
   const translateZ = useTransform(progress, [0.16, 1], [-520, 0]);
 
-  const yColumn1 = useTransform(progress, [0.16, 1], ["0%", "-38%"]);
+  // Below lg the wall is taller than it is wide, so the two rising columns travel less (-24% instead
+  // of -38%) and never run out before the section leaves. Laptop/desktop values are unchanged.
+  const compactWallRef = useRef(false);
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 1023px)");
+    const sync = () => { compactWallRef.current = query.matches; };
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, []);
+  const risingColumn = (value: number) => {
+    const t = Math.min(Math.max((value - 0.16) / 0.84, 0), 1);
+    return `${-t * (compactWallRef.current ? 24 : 38)}%`;
+  };
+
+  const yColumn1 = useTransform(progress, risingColumn);
   const yColumn2 = useTransform(progress, [0.16, 1], ["-32%", "12%"]);
-  const yColumn3 = useTransform(progress, [0.16, 1], ["0%", "-38%"]);
+  const yColumn3 = useTransform(progress, risingColumn);
   const yColumn4 = useTransform(progress, [0.16, 1], ["-26%", "18%"]);
   const columnOffsets = [yColumn1, yColumn2, yColumn3, yColumn4];
 
@@ -87,10 +129,10 @@ export default function UnfurlingGallery() {
           <header className="mb-8 max-w-[780px] sm:mb-10">
             <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--ultra-violet)]">04 <span className="mx-2 text-[var(--orchid-wash)]">/</span>Gallery</p>
             <h2 className="mt-3 text-section-heading font-semibold leading-[0.88] tracking-[-0.09em] text-[var(--midnight-ink)]" id="gallery-title" data-section-heading>Selected work<span className="text-[var(--voltage-violet)]">.</span></h2>
-            <p className="mt-4 max-w-[620px] text-sm leading-relaxed text-[var(--graphite)]">Project image spaces are ready for your 16:9 work samples.</p>
+            <p className="mt-4 max-w-[620px] text-sm leading-relaxed text-[var(--graphite)]">Screens from projects I have designed and built.</p>
           </header>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {PLACEHOLDER_IDS.map((index) => <ImagePlaceholder key={index} index={index} light />)}
+            {SLOTS.map((item) => <GalleryImage key={item.slot} {...item} light width={imageWidth} />)}
           </div>
         </div>
       </section>
@@ -131,10 +173,17 @@ export default function UnfurlingGallery() {
                 <motion.div
                   key={`gallery-column-${columnIndex}`}
                   style={{ y: columnOffsets[columnIndex] }}
-                  className="pointer-events-auto flex w-[22vw] min-w-[190px] flex-col gap-4 md:gap-6"
+                  className="pointer-events-auto flex w-[22vw] min-w-[190px] flex-col gap-4 md:gap-6 md:max-lg:w-[30vw]"
                 >
-                  {column.map((index, itemIndex) => (
-                    <ImagePlaceholder key={`gallery-${columnIndex}-${itemIndex}`} index={index} />
+                  {column.map((item, itemIndex) => (
+                    <GalleryImage
+                      key={`gallery-${columnIndex}-${itemIndex}`}
+                      {...item}
+                      repeat={item.repeat || itemIndex >= column.length / 3}
+                      // The third copy only exists to fill the taller wall on phones and tablets.
+                      className={itemIndex >= (column.length / 3) * 2 ? "lg:hidden" : ""}
+                      width={imageWidth}
+                    />
                   ))}
                 </motion.div>
               ))}
@@ -144,7 +193,7 @@ export default function UnfurlingGallery() {
           <div className="pointer-events-none absolute inset-x-0 top-0 z-30 bg-gradient-to-b from-[rgba(17,24,39,0.96)] via-[rgba(17,24,39,0.66)] to-transparent px-[clamp(22px,5vw,76px)] pb-14 pt-[clamp(28px,5vh,56px)]">
             <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--lavender-mist)]">04 <span className="mx-2 text-[rgba(255,255,255,0.48)]">/</span>Gallery</p>
             <h2 className="mt-3 text-section-heading font-semibold leading-[0.88] tracking-[-0.09em] text-[var(--pure-white)]" id="gallery-title" data-section-heading>Selected work<span className="text-[var(--lavender-mist)]">.</span></h2>
-            <p className="mt-4 max-w-[480px] font-mono text-[8px] uppercase tracking-[0.1em] text-[var(--mist)]">Scroll to unfold the 16:9 image spaces</p>
+            <p className="mt-4 max-w-[480px] font-mono text-[8px] uppercase tracking-[0.1em] text-[var(--mist)]">Scroll to explore</p>
           </div>
         </motion.div>
       </div>

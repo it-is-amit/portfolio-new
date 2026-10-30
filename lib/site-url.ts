@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 
-export function getPublicSiteUrl(): URL | undefined {
+function getPublicSiteUrl(): URL | undefined {
   const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   const deploymentHost = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
   const value = configured || deploymentHost;

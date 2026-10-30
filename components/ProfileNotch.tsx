@@ -1,7 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
-import Image from "next/image";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { profile } from "@/data/profile";
 import { SocialIcon, type SocialPlatform } from "@/components/ui/social-icon";
 
@@ -14,9 +13,23 @@ const socialLinks: Array<{
   { platform: "linkedin", label: "LinkedIn", href: profile.links.linkedin },
 ];
 
+const profileInitials = profile.name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+
 export function ProfileNotch() {
-  const notchRef = useRef<HTMLDivElement>(null);
+  const notchRef = useRef<HTMLElement>(null);
   const [stuck, setStuck] = useState(false);
+  // The photo is only drawn once it has loaded: a failed SVG <image> paints a broken-image icon over the initials.
+  const [avatarLoaded, setAvatarLoaded] = useState(false);
+
+  useEffect(() => {
+    const probe = new Image();
+    probe.referrerPolicy = "no-referrer";
+    probe.onload = () => setAvatarLoaded(true);
+    probe.src = profile.avatar;
+    return () => {
+      probe.onload = null;
+    };
+  }, []);
   const [galleryActive, setGalleryActive] = useState(false);
 
   useLayoutEffect(() => {
@@ -46,7 +59,8 @@ export function ProfileNotch() {
 
     let naturalTop = 0;
     const measureNaturalTop = () => {
-      const stage = heroStage.getBoundingClientRect();
+      // The stage is sticky inside its runway, so measure the runway's (static) position.
+      const stage = (heroStage.closest<HTMLElement>("[data-hero-runway]") ?? heroStage).getBoundingClientRect();
       const stagePadding = Number.parseFloat(getComputedStyle(heroStage).paddingTop) || 0;
       const cardBorder = Number.parseFloat(getComputedStyle(heroCard).borderTopWidth) || 0;
       naturalTop = stage.top + window.scrollY + stagePadding + cardBorder;
@@ -76,7 +90,7 @@ export function ProfileNotch() {
   }, []);
 
   return (
-    <div
+    <header
       className="profile-notch pointer-events-none inset-x-0 z-[160] flex justify-center"
       data-stuck={stuck ? "true" : undefined}
       data-gallery-active={galleryActive ? "true" : undefined}
@@ -92,17 +106,16 @@ export function ProfileNotch() {
         <a
           className="flex min-w-0 items-center gap-2"
           href="#hero"
-          aria-label={`${profile.name}, ${profile.hero.roleLabel}`}
         >
-          <Image
-            className="size-8 shrink-0 rounded-full border border-white/80 object-cover"
-            src={profile.avatar}
-            alt=""
-            width={32}
-            height={32}
-            unoptimized
-            referrerPolicy="no-referrer"
-          />
+          {/* An SVG <image>, not <img>: glass buttons scrolling under the notch repaint the HTML below them into
+              WebGL, and a cross-origin <img> without CORS would taint that canvas. The glass never walks into <svg>. */}
+          <svg className="size-8 shrink-0 overflow-hidden rounded-full border border-white/80 bg-[var(--lavender-field)]" viewBox="0 0 32 32" aria-hidden="true">
+            {/* Initials underneath: the photo covers them once loaded, and they remain if the photo URL stops working. */}
+            <text x="16" y="16.5" textAnchor="middle" dominantBaseline="middle" className="fill-[var(--ultra-violet)] text-[12px] font-bold tracking-[-0.04em]">
+              {profileInitials}
+            </text>
+            {avatarLoaded ? <image href={profile.avatar} width="32" height="32" preserveAspectRatio="xMidYMid slice" /> : null}
+          </svg>
           <span className="flex min-w-0 flex-col items-start gap-0.5">
             <strong className="text-[13px] font-bold leading-none tracking-[-0.025em] text-[var(--ultra-violet)] sm:text-[14px]">
               {profile.name}
@@ -131,6 +144,6 @@ export function ProfileNotch() {
           ))}
         </nav>
       </div>
-    </div>
+    </header>
   );
 }

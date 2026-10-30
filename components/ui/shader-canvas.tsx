@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { cn } from "./shader-canvas-utils/cn";
 import { usePrefersReducedMotion } from "./shader-canvas-utils/motion";
 
-export type ShaderCanvasStatus = "starting" | "running" | "unsupported" | "error";
+type ShaderCanvasStatus = "starting" | "running" | "unsupported" | "error";
 
-export interface ShaderCanvasProps {
+interface ShaderCanvasProps {
   /** GLSL ES 1.0 fragment shader. The component prepends time, resolution, pointer, and colour uniforms. */
   fragment?: string;
   /** Uniform name to CSS colour. Values are re-read when the document theme changes. */
@@ -308,6 +308,13 @@ export function ShaderCanvas({
         frame = null;
         return;
       }
+      // A parent can freeze the shader (e.g. while it is blurred during the hero exit) by setting
+      // data-paused="true" on the canvas: the loop keeps ticking cheaply but skips all GL work.
+      if (canvas.dataset.paused === "true") {
+        lastFrame = now;
+        frame = window.requestAnimationFrame(loop);
+        return;
+      }
       if (lastFrame) elapsed += Math.min(0.1, (now - lastFrame) / 1000);
       lastFrame = now;
       pointer.x += (pointer.targetX - pointer.x) * 0.06;
@@ -418,7 +425,8 @@ export function ShaderCanvas({
       data-shader-status={status}
     >
       <div
-        className="pointer-events-none absolute inset-0 rounded-[inherit] bg-[radial-gradient(ellipse_at_55%_100%,var(--lavender-field)_0%,transparent_55%),linear-gradient(135deg,var(--fog),var(--pure-white))]"
+        className="pointer-events-none absolute inset-0 rounded-[inherit] bg-[radial-gradient(ellipse_at_55%_100%,var(--lavender-field)_0%,transparent_55%),linear-gradient(135deg,var(--shader-surface),var(--shader-surface))]"
+        style={{ "--shader-surface": colors.u_surface ?? "var(--fog)" } as CSSProperties}
         aria-hidden="true"
       />
       <canvas
@@ -444,5 +452,3 @@ export function ShaderCanvas({
     </div>
   );
 }
-
-export default ShaderCanvas;

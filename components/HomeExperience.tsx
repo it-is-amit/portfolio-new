@@ -3,7 +3,7 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { ArrowUpRight, Mail, Phone } from "lucide-react";
-import { MotionConfig, motion } from "framer-motion";
+import { MotionConfig, motion } from "motion/react";
 import { ContactSection } from "@/components/ContactSection";
 import { ExperienceStory } from "@/components/ExperienceStory";
 import { JourneySection } from "@/components/JourneySection";
@@ -80,7 +80,7 @@ export function HomeExperience() {
   const [introReady, setIntroReady] = useState(false);
   const reducedMotion = usePrefersReducedMotion();
   const footerRef = useRef<HTMLElement>(null);
-  const handleIntroComplete = useCallback(() => setIntroReady(true), []);
+  const handleIntroReveal = useCallback(() => setIntroReady(true), []);
 
   useLayoutEffect(() => {
     const footer = footerRef.current;
@@ -101,7 +101,7 @@ export function HomeExperience() {
         <div className="portfolio-shell">
           <a className="skip-link" href="#main-content">{copy.skipToContent}</a>
           <ProfileNotch />
-          <Preloader onComplete={handleIntroComplete} />
+          <Preloader onReveal={handleIntroReveal} />
           <main id="main-content" className="portfolio-main">
             <ExperienceStory introReady={introReady} />
             <ServicesSection />
@@ -165,7 +165,6 @@ export function HomeExperience() {
 
                 <div className="site-footer__bottom">
                   <span>{profile.location}</span>
-                  {/* <span>{profile.techSummary}</span> */}
                   <small>{profile.copyright}</small>
                 </div>
               </div>
