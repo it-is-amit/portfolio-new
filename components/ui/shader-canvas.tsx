@@ -4,9 +4,9 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { cn } from "./shader-canvas-utils/cn";
 import { usePrefersReducedMotion } from "./shader-canvas-utils/motion";
 
-export type ShaderCanvasStatus = "starting" | "running" | "unsupported" | "error";
+type ShaderCanvasStatus = "starting" | "running" | "unsupported" | "error";
 
-export interface ShaderCanvasProps {
+interface ShaderCanvasProps {
   /** GLSL ES 1.0 fragment shader. The component prepends time, resolution, pointer, and colour uniforms. */
   fragment?: string;
   /** Uniform name to CSS colour. Values are re-read when the document theme changes. */
@@ -452,5 +452,3 @@ export function ShaderCanvas({
     </div>
   );
 }
-
-export default ShaderCanvas;

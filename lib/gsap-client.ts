@@ -12,7 +12,7 @@ export function registerGsapPlugins(): void {
 }
 
 /** Shared timing for the section-heading blur reveal, so every heading enters the same way. */
-export const HEADING_REVEAL = {
+const HEADING_REVEAL = {
   /** Fires as the heading crosses into the lower part of the viewport, not once it is mid-screen. */
   start: "top 88%",
   y: 22,

@@ -17,8 +17,8 @@ type AwardBadgeProps = Omit<
   children: ReactNode;
   className: string;
   tone: AwardTone;
-  /** Element to render. Defaults to `article` (Journey award cards); the education card uses `section`, small chips `div`. */
-  as?: "article" | "section" | "div";
+  /** Element to render. Defaults to `article`; list items (Journey award cards) use `li`, the education card `section`, small chips `div`. */
+  as?: "article" | "li" | "section" | "div";
   /** Tilt multiplier: 1 for cards, lower for small elements where full tilt would look exaggerated. */
   tilt?: number;
 };

@@ -18,6 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: profile.seo.description,
     applicationName: siteName,
     category: "technology",
+    alternates: { canonical: "/" },
     openGraph: {
       type: "website",
       title: profile.seo.title,

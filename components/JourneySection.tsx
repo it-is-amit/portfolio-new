@@ -11,7 +11,7 @@ const CARD_STACK_STEP = 16;
 
 export function JourneySection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const stackRef = useRef<HTMLDivElement>(null);
+  const stackRef = useRef<HTMLOListElement>(null);
   const reducedMotion = usePrefersReducedMotion();
 
   useLayoutEffect(() => {
@@ -104,20 +104,18 @@ export function JourneySection() {
         </aside>
 
         <div className="journey-main flex min-w-0 flex-col gap-7">
-          <div
+          <ol
             className="journey-card-stack"
             data-journey-card-stack
             ref={stackRef}
-            role="list"
             aria-label={copy.journey}
           >
             {journey.map((item, index) => (
-              <article
+              <li
                 className="journey-card max-md:h-auto max-md:min-h-0 md:max-lg:h-[220px] md:max-lg:min-h-[220px]"
                 data-journey-card
                 data-stack-index={index}
                 key={item.id}
-                role="listitem"
                 aria-labelledby={`journey-${item.id}`}
               >
                 <span className="journey-card__connector" aria-hidden="true" />
@@ -130,9 +128,9 @@ export function JourneySection() {
                   <p className="journey-card__company">{item.company}</p>
                   <p className="journey-card__description">{item.description}</p>
                 </div>
-              </article>
+              </li>
             ))}
-          </div>
+          </ol>
 
           <aside className="journey-credentials" aria-label="Education and recognition">
             {/* Same metallic plate as the award cards (tilt, glare, prismatic foil), in the card's own violet. */}
@@ -165,15 +163,15 @@ export function JourneySection() {
               </span>
             </AwardBadge>
 
-            <div className="journey-awards-grid" role="list" aria-label={copy.recognition}>
+            <ul className="journey-awards-grid" aria-label={copy.recognition}>
               {awards.map((award, index) => {
                 const AwardIcon = index === 0 ? Award : Star;
                 return (
                   <AwardBadge
+                    as="li"
                     className="journey-award-card"
                     tone={index === 0 ? "gold" : "violet"}
                     key={award.title}
-                    role="listitem"
                     aria-labelledby={`journey-award-${index}`}
                   >
                     <span className="journey-award-card__icon">
@@ -188,7 +186,7 @@ export function JourneySection() {
                   </AwardBadge>
                 );
               })}
-            </div>
+            </ul>
           </aside>
         </div>
       </div>

@@ -377,7 +377,7 @@ export function ServicesSection() {
                   <i className="absolute -top-2.5 -right-2.5 size-3.5 border-t-[1.5px] border-r-[1.5px] border-[color-mix(in_srgb,var(--cap-accent)_55%,transparent)]" />
                   <i className="absolute -bottom-2.5 -left-2.5 size-3.5 border-b-[1.5px] border-l-[1.5px] border-[color-mix(in_srgb,var(--cap-accent)_55%,transparent)]" />
                   <i className="absolute -right-2.5 -bottom-2.5 size-3.5 border-r-[1.5px] border-b-[1.5px] border-[color-mix(in_srgb,var(--cap-accent)_55%,transparent)]" />
-                  <span className="absolute -top-6 left-0 font-mono text-[9px] tracking-[0.1em] text-[color-mix(in_srgb,var(--cap-accent)_75%,transparent)] max-md:hidden">
+                  <span className="absolute -top-6 left-0 font-mono text-[9px] tracking-[0.1em] text-[var(--cap-accent)] max-md:hidden">
                     960 × 600
                   </span>
                 </span>

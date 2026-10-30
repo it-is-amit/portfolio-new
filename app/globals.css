@@ -2527,20 +2527,6 @@
     );
   }
 
-  .path-marquee__fallback {
-    display: none !important;
-  }
-
-  @supports not (offset-path: path("M 0 0 L 1 1")) {
-    .path-marquee__fallback {
-      display: flex !important;
-    }
-
-    .path-marquee__animated {
-      display: none !important;
-    }
-  }
-
   /* Shared layout language. */
 
   .eyebrow {

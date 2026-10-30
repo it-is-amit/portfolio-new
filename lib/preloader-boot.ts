@@ -10,7 +10,7 @@
  */
 export const PRELOADER_ATTRIBUTE = "data-preloader";
 
-export type PreloaderBootState = {
+type PreloaderBootState = {
   value: number;
   frame: number;
   handedOff: boolean;
