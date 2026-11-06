@@ -3,11 +3,78 @@
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
+/*
+ * cssVars: tweens numeric CSS custom properties, e.g. `{ cssVars: { "--cap-o": 1 } }`.
+ *
+ * GSAP's CSSPlugin reads a custom property's start value with getComputedStyle whenever a tween
+ * starts. On a long scrubbed timeline those starts happen mid-frame, right after other tweens have
+ * written styles, so every one forces a full style recalculation of the section. This plugin takes
+ * the start value from the element's inline style instead (where the previous tween on that property
+ * left it), then from a value read up front by seedCssVars(), and only then from getComputedStyle.
+ * Values are unitless numbers. clearCssVars() removes everything it wrote (call it on cleanup).
+ */
+type StyledElement = HTMLElement | SVGElement;
+
+const cssVarSeeds = new WeakMap<Element, Map<string, number>>();
+const cssVarsWritten = new Map<StyledElement, Set<string>>();
+
+function isStyledElement(target: unknown): target is StyledElement {
+  return typeof Element !== "undefined" && target instanceof Element && "style" in target;
+}
+
+function cssVarStart(target: StyledElement, name: string): number {
+  const inline = Number.parseFloat(target.style.getPropertyValue(name));
+  if (!Number.isNaN(inline)) return inline;
+  const seeded = cssVarSeeds.get(target)?.get(name);
+  if (seeded !== undefined) return seeded;
+  return Number.parseFloat(getComputedStyle(target).getPropertyValue(name)) || 0;
+}
+
+const CssVarsPlugin: gsap.Plugin = {
+  name: "cssVars",
+  init(target, values: Record<string, number>) {
+    if (!isStyledElement(target)) return;
+    let names = cssVarsWritten.get(target);
+    if (!names) cssVarsWritten.set(target, (names = new Set()));
+    for (const name of Object.keys(values)) {
+      // style.setProperty(name, value) on every render, exactly like CSSPlugin's own custom-property path.
+      this.add(target.style, "setProperty", cssVarStart(target, name), Number(values[name]), 0, 0, 0, 0, name);
+      this._props.push(name);
+      names.add(name);
+    }
+  },
+};
+
+/**
+ * Reads the current CSS value of each (element, custom property) pair in one pass, before any tween
+ * writes a style, so the whole batch costs a single style recalculation instead of one per tween.
+ */
+export function seedCssVars(pairs: Iterable<readonly [Element, string]>): void {
+  const computed = new Map<Element, CSSStyleDeclaration>();
+  for (const [element, name] of pairs) {
+    let style = computed.get(element);
+    if (!style) computed.set(element, (style = getComputedStyle(element)));
+    let seeds = cssVarSeeds.get(element);
+    if (!seeds) cssVarSeeds.set(element, (seeds = new Map()));
+    seeds.set(name, Number.parseFloat(style.getPropertyValue(name)) || 0);
+  }
+}
+
+/** Removes every custom property the cssVars plugin wrote inside `root` (inclusive) and forgets their seeds. */
+export function clearCssVars(root: Element): void {
+  for (const [element, names] of cssVarsWritten) {
+    if (!root.contains(element)) continue;
+    names.forEach((name) => element.style.removeProperty(name));
+    cssVarsWritten.delete(element);
+    cssVarSeeds.delete(element);
+  }
+}
+
 let registered = false;
 
 export function registerGsapPlugins(): void {
   if (registered) return;
-  gsap.registerPlugin(ScrollTrigger);
+  gsap.registerPlugin(ScrollTrigger, CssVarsPlugin);
   registered = true;
 }
 

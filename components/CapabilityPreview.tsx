@@ -32,6 +32,7 @@ import { capabilityStages } from "@/data/profile";
  * - `data-cap-build`: wireframe build order (side → top → kpi → chart → sources → table)
  * - `data-cap-slot`: which design pass reveals the slot (type → control → visual)
  * - `data-cap-fx`: annotations and tooling that fade in/out on their own scroll interval
+ * - `data-cap-mp`: laptop and larger only, the role cursors that build the page (see `collaborators`)
  */
 
 type SlotKind = "type" | "control" | "visual";
@@ -134,6 +135,111 @@ const orders = [
 ] as const;
 
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"] as const;
+
+/**
+ * Laptop and larger: a multiplayer session. Each role has its own cursor colour and does its own
+ * part of the work (wireframing, UI design, visual design, frontend), driven by the scroll timeline
+ * in ServicesSection. `actions` are the chips shown under the name while that work happens.
+ */
+const collaborators = [
+  {
+    id: "ux",
+    name: "UX Designer",
+    color: "#2563eb",
+    actions: [
+      { id: "frame", label: "Frame tool" },
+      { id: "flow", label: "User flow" },
+    ],
+  },
+  {
+    id: "ui",
+    name: "UI Designer",
+    color: "#c0247f",
+    actions: [
+      { id: "type", label: "Text styles" },
+      { id: "fill", label: "Fill · #862FE7" },
+      { id: "component", label: "Create component" },
+      { id: "gap", label: "Gap · 14" },
+    ],
+  },
+  {
+    id: "visual",
+    name: "Visual Designer",
+    color: "#c2410c",
+    actions: [
+      { id: "chart", label: "Place chart" },
+      { id: "line", label: "Draw line" },
+      { id: "shadow", label: "Drop shadow" },
+    ],
+  },
+  {
+    id: "dev",
+    name: "Frontend Developer",
+    color: "#862fe7",
+    actions: [
+      { id: "wire", label: "useMetrics(range)" },
+      { id: "test", label: "Test states" },
+      { id: "deploy", label: "Deploy" },
+    ],
+  },
+] as const;
+
+type Collaborator = (typeof collaborators)[number];
+
+/*
+ * One role cursor, positioned in canvas units: --x / --y (pointer tip), --o (opacity), --k (click),
+ * --tf / --tv (tag flipped left / up near the canvas edges). Transform and opacity only, so moving it
+ * never triggers layout or repaints the dashboard underneath.
+ */
+function CollaboratorCursor({ id, name, color, actions }: Collaborator) {
+  return (
+    <span
+      className="absolute top-0 left-0 opacity-[var(--o)] will-change-transform [--k:0] [--o:0] [--tf:0] [--tv:0] [--x:0] [--y:0] [transform:translate3d(calc(var(--x)*var(--u)),calc(var(--y)*var(--u)),0)]"
+      style={{ "--mp": color } as CSSProperties}
+      data-cap-mp={id}
+    >
+      <i className="absolute top-0 left-0 size-[calc(var(--u)*26)] -translate-1/2 rounded-full border-[length:max(1px,calc(var(--u)*1.5))] border-[var(--mp)] opacity-[calc(var(--k)*0.85)] [scale:calc(0.35+var(--k)*0.65)]" />
+      <svg
+        className="absolute -top-[calc(var(--u)*2)] -left-[calc(var(--u)*3)] size-[calc(var(--u)*20)] max-w-none origin-[15%_10%] overflow-visible drop-shadow-[0_calc(var(--u)*1.5)_calc(var(--u)*2.5)_rgba(17,24,39,0.28)] [scale:calc(1-var(--k)*0.14)]"
+        viewBox="0 0 20 20"
+      >
+        <path d="M3 2 L3 16 L7 12.4 L9.6 18 L12.2 16.8 L9.7 11.4 L15 11.2 Z" fill={color} stroke="#fff" strokeWidth={1.4} strokeLinejoin="round" />
+      </svg>
+      <span className="absolute top-[calc(var(--u)*17)] left-[calc(var(--u)*13)] grid justify-items-start gap-[calc(var(--u)*3)] [transform:translate(calc(var(--tf)*(-100%_-_var(--u)*22)),calc(var(--tv)*(-100%_-_var(--u)*32)))]">
+        <span className="rounded-[calc(var(--u)*4)] bg-[var(--mp)] px-[calc(var(--u)*6)] py-[calc(var(--u)*3)] text-[length:max(10px,calc(var(--u)*9.5))] leading-none font-semibold tracking-[-0.01em] whitespace-nowrap text-white shadow-[0_calc(var(--u)*2)_calc(var(--u)*6)_rgba(17,24,39,0.18)]">
+          {name}
+        </span>
+        <span className="grid">
+          {actions.map((action) => (
+            <span
+              className="col-start-1 row-start-1 rounded-[calc(var(--u)*4)] border border-[color-mix(in_srgb,var(--mp)_30%,transparent)] bg-white px-[calc(var(--u)*5)] py-[calc(var(--u)*2.5)] font-mono text-[length:max(9px,calc(var(--u)*8))] leading-none whitespace-nowrap text-[var(--mp)] opacity-[var(--cap-o)] shadow-[0_calc(var(--u)*2)_calc(var(--u)*5)_rgba(17,24,39,0.1)]"
+              data-cap-fx={`mp-${id}-${action.id}`}
+              key={action.id}
+            >
+              {action.label}
+            </span>
+          ))}
+        </span>
+      </span>
+    </span>
+  );
+}
+
+/** The UX Designer's frame tool: --mx / --my position it, --mw / --mh size it (canvas units). */
+function DrawFrame() {
+  const handle = "absolute size-[calc(var(--u)*6)] border border-[#2563eb] bg-white";
+  return (
+    <span
+      className="absolute top-0 left-0 h-[calc(var(--mh)*var(--u))] w-[calc(var(--mw)*var(--u))] border-[length:max(1px,calc(var(--u)*1.2))] border-[#2563eb] bg-[rgba(37,99,235,0.07)] opacity-[var(--cap-o)] [--mh:0] [--mw:0] [--mx:0] [--my:0] [transform:translate3d(calc(var(--mx)*var(--u)),calc(var(--my)*var(--u)),0)]"
+      data-cap-fx="mp-frame"
+    >
+      <i className={`${handle} -top-[calc(var(--u)*3.5)] -left-[calc(var(--u)*3.5)]`} />
+      <i className={`${handle} -top-[calc(var(--u)*3.5)] -right-[calc(var(--u)*3.5)]`} />
+      <i className={`${handle} -bottom-[calc(var(--u)*3.5)] -left-[calc(var(--u)*3.5)]`} />
+      <i className={`${handle} -right-[calc(var(--u)*3.5)] -bottom-[calc(var(--u)*3.5)]`} />
+    </span>
+  );
+}
 
 function Spark({ values }: { values: readonly number[] }) {
   return (
@@ -466,9 +572,18 @@ function CapabilityPreviewComponent() {
 
             <span className="cap-toast" data-cap-fx="toast"><i />Compiled successfully<em>next dev</em></span>
 
-            <svg className="cap-cursor" viewBox="0 0 20 20" aria-hidden="true">
+            {/* Below 1024px: the single scripted cursor of the frontend stage. */}
+            <svg className="cap-cursor lg:hidden" viewBox="0 0 20 20" aria-hidden="true">
               <path d="M3 2 L3 16 L7 12.4 L9.6 18 L12.2 16.8 L9.7 11.4 L15 11.2 Z" />
             </svg>
+
+            {/* 1024px and up: the multiplayer session (scroll mode only). */}
+            <div className="pointer-events-none absolute inset-0 z-[9] hidden lg:block group-data-[mode=static]/cap:hidden" data-cap-mp-layer>
+              <DrawFrame />
+              {collaborators.map((collaborator) => (
+                <CollaboratorCursor {...collaborator} key={collaborator.id} />
+              ))}
+            </div>
           </div>
         </div>
       </div>
