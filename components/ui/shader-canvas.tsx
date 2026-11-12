@@ -323,9 +323,18 @@ export function ShaderCanvas({
       frame = window.requestAnimationFrame(loop);
     };
 
+    // Theme colours are re-read only when they may have changed, and only while the canvas is visible.
+    let coloursStale = false;
+    const refreshColours = () => {
+      coloursStale = false;
+      applyColours();
+      render(reducedMotion ? stillTime : elapsed);
+    };
+
     const start = () => {
       stop();
       if (disposed || lost) return;
+      if (coloursStale) refreshColours();
       if (reducedMotion) {
         render(stillTime);
         return;
@@ -380,11 +389,32 @@ export function ShaderCanvas({
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
 
+    // Smooth scrolling (Lenis) toggles its own `lenis-*` classes on <html> at the start and end of
+    // every scroll. Those never change a colour, so they are ignored; anything else is coalesced into
+    // one re-read per frame (each read forces a style recalculation), deferred while off-screen.
+    const themeKey = () => {
+      const root = document.documentElement;
+      const classes = Array.from(root.classList).filter((name) => !name.startsWith("lenis")).join(" ");
+      return `${classes}|${root.dataset.theme ?? ""}|${root.getAttribute("style") ?? ""}`;
+    };
+    let lastThemeKey = themeKey();
+    let themeFrame: number | null = null;
     let themeObserver: MutationObserver | null = null;
     if (typeof MutationObserver !== "undefined") {
       themeObserver = new MutationObserver(() => {
-        applyColours();
-        render(reducedMotion ? stillTime : elapsed);
+        const key = themeKey();
+        if (key === lastThemeKey) return;
+        lastThemeKey = key;
+        if (!visible || document.hidden) {
+          coloursStale = true;
+          return;
+        }
+        if (themeFrame === null) {
+          themeFrame = window.requestAnimationFrame(() => {
+            themeFrame = null;
+            if (!disposed && !lost) refreshColours();
+          });
+        }
       });
       themeObserver.observe(document.documentElement, {
         attributes: true,
@@ -407,6 +437,7 @@ export function ShaderCanvas({
       resizeObserver?.disconnect();
       intersectionObserver?.disconnect();
       themeObserver?.disconnect();
+      if (themeFrame !== null) window.cancelAnimationFrame(themeFrame);
       if (!resizeObserver) window.removeEventListener("resize", resizeAndRender);
       if (finePointer && !reducedMotion && "PointerEvent" in window) {
         window.removeEventListener("pointermove", onPointerMove);

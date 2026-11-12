@@ -775,8 +775,10 @@
    * Capabilities: centred design-to-code showcase
    * Layout, background layers, glows and guides are Tailwind utilities in ServicesSection.tsx.
    * This block holds only what they share: the scroll-driven colour tokens. A scrubbed GSAP
-   * timeline writes the --cap-* inputs inline on `.cap`; static mode (reduced motion or short
-   * viewports) shows the finished product, so the inputs keep their final/defaults there.
+   * timeline writes the --cap-* inputs inline: --cap-k3 and --cap-arrive on `.cap`; the per-frame
+   * inputs (--cap-p, --cap-glow, --cap-k2, --cap-k4) only on the layers that read them, so a frame
+   * never restyles the whole section. Static mode (reduced motion or short viewports) shows the
+   * finished product, so the inputs keep their final/defaults there.
    *   --cap-k2 / --cap-k3 / --cap-k4 (0–1): section colour crossfades (lavender, deep violet, night);
    *     --cap-k3 is also the "dark" switch for the heading, grid and guides.
    *   --cap-arrive (0–1): hand-off from the hero. --cap-solid keeps the section background fully
